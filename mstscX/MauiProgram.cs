@@ -30,6 +30,7 @@ namespace mstscX
                 handlers.AddHandler<WinUI.TitleNavigationButton, WinUI.TitleNavigationButtonHandler>();
                 handlers.AddHandler<WinUI.TitleFullScreenButton, WinUI.TitleFullScreenButtonHandler>();
                 handlers.AddHandler<WinUI.ServerPanelDivider, WinUI.ServerPanelDividerHandler>();
+
             });
             return builder.Build();
         }
