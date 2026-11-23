@@ -1,5 +1,5 @@
 [CmdletBinding(SupportsShouldProcess)]
-param([string]$InnoCompiler)
+param([string]$InnoCompiler, [switch]$SkipPublish)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -134,6 +134,14 @@ try {
         Remove-Item -LiteralPath $oldInstaller.FullName -Force
     }
     Write-Host "Установщик готов: $installerPath"
+    if (-not $SkipPublish) {
+        try {
+            & (Join-Path $setupRoot 'Publish-mstscX.ps1') -InstallerPath $installerPath
+        }
+        catch {
+            throw "Установщик собран и сохранён в $installerPath, но публикация GitHub не удалась: $($_.Exception.Message)"
+        }
+    }
 }
 finally {
     if (Test-Path -LiteralPath $previous) {
