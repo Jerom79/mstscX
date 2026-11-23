@@ -32,6 +32,18 @@ L.Language = "en";
 Check(L.F("Не удалось запустить RDP (0x{0:X8}). {1}", 5, "details") == "Could not start RDP (0x00000005). details", "Formatted error");
 Check(L.T("User-defined server name") == "User-defined server name", "Unknown text preserved");
 var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../mstscX"));
+foreach (var file in Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+    .Where(p => !p.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar) &&
+                !p.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+{
+    // A missing key otherwise silently falls back to Russian in the English UI.
+    foreach (Match match in Regex.Matches(File.ReadAllText(file),
+        "(?:\\bL\\.[TF]|\\bPowerShellText)\\(\\s*(\"(?:[^\"\\\\]|\\\\.)*\")"))
+    {
+        string source = JsonSerializer.Deserialize<string>(match.Groups[1].Value)!;
+        Check(catalog.ContainsKey(source), "Missing C# translation in " + file + ": " + source);
+    }
+}
 foreach (var file in Directory.EnumerateFiles(root, "*.xaml", SearchOption.AllDirectories)
     .Where(p => !p.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar) &&
                 !p.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))

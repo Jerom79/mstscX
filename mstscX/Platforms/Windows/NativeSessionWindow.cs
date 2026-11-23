@@ -162,6 +162,12 @@ internal sealed class NativeSessionWindow
                 UpdateStatus();
                 ReconnectStatusChanged?.Invoke(message);
             });
+            current.HostedFullScreenRequested += entered => dispatcher.TryEnqueue(() =>
+            {
+                if (closing || switchingMonitors || session != current || !connected) return;
+                if (entered) EnterFullScreen();
+                else ReturnToWindow();
+            });
             current.NativeFullScreenChanged += entered => dispatcher.TryEnqueue(() =>
             {
                 if (closing || switchingMonitors || session != current || !connected)
@@ -212,6 +218,7 @@ internal sealed class NativeSessionWindow
             UpdateLayout();
             SetTransitionsDisabled(false);
         }
+        current.SetHostedFullScreen(true);
         current.ActivateViewport();
         FullScreenTransitionTrace.Write("Win32 enter fullscreen end");
     }
@@ -251,6 +258,7 @@ internal sealed class NativeSessionWindow
 
     private void RestoreWindow(bool dragging)
     {
+        session?.SetHostedFullScreen(false);
         changingLayout = true;
         SetTransitionsDisabled(true);
         try

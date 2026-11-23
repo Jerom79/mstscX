@@ -186,6 +186,12 @@ public partial class SessionPage : ContentView
                     onReconnectStatusChanged?.Invoke(message);
                 }
             });
+            nextSession.HostedFullScreenRequested += entered => element.DispatcherQueue.TryEnqueue(() =>
+            {
+                if (HasEnded || switchingMonitorMode || session != nextSession || sessionWindow is not { } owner) return;
+                if (entered && fullScreenWindow is null) EnterFullScreen(owner);
+                else if (!entered && fullScreenWindow is not null) ReturnToWindow();
+            });
             nextSession.NativeFullScreenChanged += entered => element.DispatcherQueue.TryEnqueue(() =>
             {
                 if (HasEnded || switchingMonitorMode || session != nextSession || sessionWindow is not { } owner)
@@ -402,6 +408,8 @@ public partial class SessionPage : ContentView
             Grid.SetRow(SessionArea, 0);
             Grid.SetRowSpan(SessionArea, 2);
         });
+        session?.SetHostedFullScreen(true);
+        session?.ActivateViewport();
         if (getWindow()?.Handler?.PlatformView is NativeWindow nativeWindow)
         {
             fullScreenBar = new FullScreenSessionBar(WindowNative.GetWindowHandle(nativeWindow),
@@ -645,6 +653,7 @@ public partial class SessionPage : ContentView
         if (fullScreenWindow is not { } window)
             return;
 
+        session?.SetHostedFullScreen(false);
         UpdateWindowModeLayout(() =>
         {
             StopFullScreenBar();

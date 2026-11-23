@@ -18,6 +18,8 @@ internal sealed class RdpSession : IDisposable
     private const int DisconnectedEvent = 4;
     private const int EnterFullScreenEvent = 5;
     private const int LeaveFullScreenEvent = 6;
+    private const int RequestFullScreenEvent = 8;
+    private const int RequestWindowedEvent = 9;
     private const int RemoteProgramResultEvent = 20;
     private const int RemoteWindowDisplayedEvent = 29;
     private const int AutoReconnectedEvent = 33;
@@ -40,6 +42,8 @@ internal sealed class RdpSession : IDisposable
     private readonly Action<int> onDisconnected;
     private readonly Action onEnterFullScreen;
     private readonly Action onLeaveFullScreen;
+    private readonly Action onRequestFullScreen;
+    private readonly Action onRequestWindowed;
     private readonly Action<int> onFatalError;
     private readonly Action onAutoReconnected;
     private readonly Action<int, bool, int, int> onAutoReconnecting;
@@ -61,6 +65,10 @@ internal sealed class RdpSession : IDisposable
     private bool disconnectedSubscribed;
     private bool enterFullScreenSubscribed;
     private bool leaveFullScreenSubscribed;
+    private bool requestFullScreenSubscribed;
+    private bool requestWindowedSubscribed;
+    private bool containerHandlesFullScreen;
+    private bool updatingHostedFullScreen;
     private bool fatalSubscribed;
     private bool autoReconnectedSubscribed;
     private bool autoReconnectingSubscribed;
@@ -121,8 +129,16 @@ internal sealed class RdpSession : IDisposable
             }
         };
         onDisconnected = ReportDisconnection;
-        onEnterFullScreen = () => NativeFullScreenChanged?.Invoke(true);
-        onLeaveFullScreen = () => NativeFullScreenChanged?.Invoke(false);
+        onEnterFullScreen = () => { if (!containerHandlesFullScreen) NativeFullScreenChanged?.Invoke(true); };
+        onLeaveFullScreen = () => { if (!containerHandlesFullScreen) NativeFullScreenChanged?.Invoke(false); };
+        onRequestFullScreen = () =>
+        {
+            if (containerHandlesFullScreen && !updatingHostedFullScreen) HostedFullScreenRequested?.Invoke(true);
+        };
+        onRequestWindowed = () =>
+        {
+            if (containerHandlesFullScreen && !updatingHostedFullScreen) HostedFullScreenRequested?.Invoke(false);
+        };
         onFatalError = code =>
         {
             remoteWindowTimer?.Stop();
@@ -206,6 +222,10 @@ internal sealed class RdpSession : IDisposable
                 enterFullScreenSubscribed = true;
                 ComEventsHelper.Combine(client, EventsInterface, LeaveFullScreenEvent, onLeaveFullScreen);
                 leaveFullScreenSubscribed = true;
+                ComEventsHelper.Combine(client, EventsInterface, RequestFullScreenEvent, onRequestFullScreen);
+                requestFullScreenSubscribed = true;
+                ComEventsHelper.Combine(client, EventsInterface, RequestWindowedEvent, onRequestWindowed);
+                requestWindowedSubscribed = true;
             }
             ComEventsHelper.Combine(client, EventsInterface, 10, onFatalError);
             fatalSubscribed = true;
@@ -224,6 +244,7 @@ internal sealed class RdpSession : IDisposable
     public event Action? Connected;
     public event Action<string?>? Disconnected;
     public event Action<bool>? NativeFullScreenChanged;
+    public event Action<bool>? HostedFullScreenRequested;
     public event Action<string?>? ReconnectStatusChanged;
     public bool IsRemoteAppStarted { get; private set; }
     public bool ReconnectAttemptsExhausted => reconnectReason.HasValue &&
@@ -275,6 +296,7 @@ internal sealed class RdpSession : IDisposable
         bool isRemoteApp = remoteAppWorkArea is not null;
         UsesMultipleMonitors = !isRemoteApp && !singleMonitor && profile?.Display.UseMultimon == true &&
             HasMultipleMonitors;
+        containerHandlesFullScreen = !isRemoteApp && !UsesMultipleMonitors;
         if (remoteAppWorkArea is { } workArea)
         {
             // RAIL windows use the display workspace, independently of the ActiveX host rectangle.
@@ -324,10 +346,11 @@ internal sealed class RdpSession : IDisposable
             settings.SmartSizing = !isRemoteApp;
             settings.GrabFocusOnConnect = !isRemoteApp;
             settings.DisplayConnectionBar = false;
-            if (isRemoteApp)
+            if (isRemoteApp || containerHandlesFullScreen)
             {
-                // Multimon may request full screen during connection. Keep the desktop in
-                // its hidden container; only the separate RAIL application windows are shown.
+                // The host owns single-monitor fullscreen geometry. Notify ActiveX of that
+                // mode without letting it move the viewport into a separate native window.
+                // RemoteApp likewise keeps its desktop in the hidden RAIL container.
                 settings.ContainerHandledFullScreen = 1;
             }
             if (profile?.Display is { } display)
@@ -364,6 +387,8 @@ internal sealed class RdpSession : IDisposable
         }
 
         var credentials = (IRdpCredentialSettings)rdp;
+        if (containerHandlesFullScreen)
+            credentials.ConnectionBarText = profile?.Name ?? endpoint.Host;
         if (UsesMultipleMonitors)
         {
             credentials.UseMultimon = true;
@@ -404,11 +429,33 @@ internal sealed class RdpSession : IDisposable
         rdp.Connect();
     }
 
+    internal void SetHostedFullScreen(bool fullScreen)
+    {
+        if (!containerHandlesFullScreen || client is not { Connected: 1 } rdp)
+            return;
+        try
+        {
+            if (rdp.FullScreen == fullScreen) return;
+            // KeyboardHookMode=2 follows the control's FullScreen flag, not the size
+            // or presenter of its parent. ContainerHandledFullScreen keeps HWND layout
+            // and dragging in the host while ActiveX handles Windows shortcuts itself.
+            updatingHostedFullScreen = true;
+            FullScreenTransitionTrace.Write($"RDP hosted fullscreen sync begin value={fullScreen}");
+            rdp.FullScreen = fullScreen;
+            FullScreenTransitionTrace.Write($"RDP hosted fullscreen sync end actual={rdp.FullScreen}");
+        }
+        catch (COMException ex)
+        {
+            FullScreenTransitionTrace.Write($"RDP hosted fullscreen sync failed error=0x{ex.HResult:X8}");
+        }
+        finally { updatingHostedFullScreen = false; }
+    }
+
     public bool TryEnterNativeFullScreen(Guid profileId, Func<(string Title, string ServerName)> getTitle,
         Action<Windows.Graphics.PointInt32?> exit, Action disconnect, Action minimize, bool attachOnly = false,
         bool returnToMainWindow = false)
     {
-        if (client is not { Connected: 1 } rdp)
+        if (containerHandlesFullScreen || client is not { Connected: 1 } rdp)
             return false;
 
         try
@@ -1170,6 +1217,10 @@ internal sealed class RdpSession : IDisposable
                         ComEventsHelper.Remove(rdp, EventsInterface, EnterFullScreenEvent, onEnterFullScreen);
                     if (leaveFullScreenSubscribed)
                         ComEventsHelper.Remove(rdp, EventsInterface, LeaveFullScreenEvent, onLeaveFullScreen);
+                    if (requestFullScreenSubscribed)
+                        ComEventsHelper.Remove(rdp, EventsInterface, RequestFullScreenEvent, onRequestFullScreen);
+                    if (requestWindowedSubscribed)
+                        ComEventsHelper.Remove(rdp, EventsInterface, RequestWindowedEvent, onRequestWindowed);
                     if (fatalSubscribed)
                         ComEventsHelper.Remove(rdp, EventsInterface, 10, onFatalError);
                     if (autoReconnectedSubscribed)
