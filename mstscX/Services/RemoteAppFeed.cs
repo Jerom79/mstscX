@@ -25,7 +25,7 @@ internal static class RemoteAppFeed
             uri.Scheme == Uri.UriSchemeHttps && uri.UserInfo.Length == 0)
             return uri;
 
-        throw new FormatException("Укажите HTTPS-адрес ленты RD Web или корректный адрес подключения.");
+        throw new FormatException(global::mstscX.Services.L.T("Укажите HTTPS-адрес ленты RD Web или корректный адрес подключения."));
     }
 
     internal static async Task<IReadOnlyList<PublishedRemoteApp>> ListAsync(Uri feed, NetworkCredential credential)
@@ -44,7 +44,7 @@ internal static class RemoteAppFeed
         using var reader = XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit });
         var root = XDocument.Load(reader).Root;
         if (root?.Name != FeedNamespace + "ResourceCollection")
-            throw new FormatException("RD Web вернул страницу вместо ленты опубликованных приложений. Проверьте адрес и способ входа.");
+            throw new FormatException(global::mstscX.Services.L.T("RD Web вернул страницу вместо ленты опубликованных приложений. Проверьте адрес и способ входа."));
 
         var apps = new List<PublishedRemoteApp>();
         foreach (var resource in root.Descendants(FeedNamespace + "Resource"))
@@ -106,7 +106,7 @@ internal static class RemoteAppFeed
         await using var stream = await response.Content.ReadAsStreamAsync();
         var published = await RdpFileImport.ReadAsync(stream, app.Name);
         if (string.IsNullOrWhiteSpace(published.RemoteApp.Program))
-            throw new FormatException("В файле опубликованного приложения нет псевдонима RemoteApp.");
+            throw new FormatException(global::mstscX.Services.L.T("В файле опубликованного приложения нет псевдонима RemoteApp."));
 
         return published.RemoteApp with { Enabled = true };
     }
@@ -136,9 +136,9 @@ internal static class RemoteAppFeed
     private static void CheckResponse(HttpResponseMessage response)
     {
         if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            throw new FormatException("RD Web отклонил вход. Проверьте учётную запись и доступ к ленте.");
+            throw new FormatException(global::mstscX.Services.L.T("RD Web отклонил вход. Проверьте учётную запись и доступ к ленте."));
         if ((int)response.StatusCode is >= 300 and < 400)
-            throw new FormatException("RD Web перенаправил запрос. Укажите прямой HTTPS-адрес ленты с поддержкой входа Windows или HTTP-аутентификации.");
+            throw new FormatException(global::mstscX.Services.L.T("RD Web перенаправил запрос. Укажите прямой HTTPS-адрес ленты с поддержкой входа Windows или HTTP-аутентификации."));
 
         response.EnsureSuccessStatusCode();
     }

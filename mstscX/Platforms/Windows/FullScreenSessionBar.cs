@@ -49,8 +49,8 @@ internal sealed class FullScreenSessionBar(nint owner, DispatcherQueue dispatche
     private string sessionTitle = title;
     private string sessionServerName = serverName;
     private string PanelTitle => panelState.Compact ? sessionServerName : sessionTitle;
-    private string PinLabel => panelState.Pinned ? "Открепить панель" : "Закрепить панель";
-    private string CompactLabel => panelState.Compact ? "Расширить панель" : "Уменьшить панель";
+    private string PinLabel => panelState.Pinned ? global::mstscX.Services.L.T("Открепить панель") : global::mstscX.Services.L.T("Закрепить панель");
+    private string CompactLabel => panelState.Compact ? global::mstscX.Services.L.T("Расширить панель") : global::mstscX.Services.L.T("Уменьшить панель");
 
     internal void Update()
     {
@@ -188,9 +188,9 @@ internal sealed class FullScreenSessionBar(nint owner, DispatcherQueue dispatche
         pin = Button(PinButton, PinLabel);
         compactToggle = Button(CompactButton, CompactLabel);
         grip = Button(GripButton, PanelTitle);
-        minimize = Button(MinimizeButton, "Свернуть");
-        restore = Button(ExitButton, "Выйти из полноэкранного режима");
-        close = Button(DisconnectButton, "Отключиться");
+        minimize = Button(MinimizeButton, global::mstscX.Services.L.T("Свернуть"));
+        restore = Button(ExitButton, global::mstscX.Services.L.T("Выйти из полноэкранного режима"));
+        close = Button(DisconnectButton, global::mstscX.Services.L.T("Отключиться"));
         if (pin != 0 && compactToggle != 0 && minimize != 0 && restore != 0 && close != 0 &&
             grip != 0 && SetWindowSubclass(grip, windowProcedure, 1, 0))
         {
@@ -267,7 +267,7 @@ internal sealed class FullScreenSessionBar(nint owner, DispatcherQueue dispatche
         {
             if (returnToMainWindow)
             {
-                SetWindowText(restore, "Вернуться в основное окно");
+                SetWindowText(restore, global::mstscX.Services.L.T("Вернуться в основное окно"));
                 LayoutButton(restore, actionsStart, actionWidth);
             }
             else

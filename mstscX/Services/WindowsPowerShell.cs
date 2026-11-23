@@ -13,7 +13,7 @@ internal static class WindowsPowerShell
     internal static string? GetUntrustedHost(ServerProfile profile)
     {
         if (!RdpEndpoint.TryParse(profile.Address, out var endpoint))
-            throw new FormatException("Укажите корректный адрес сервера в профиле.");
+            throw new FormatException(global::mstscX.Services.L.T("Укажите корректный адрес сервера в профиле."));
         return IsExplicitlyTrustedHost(endpoint.Host) ? null : endpoint.Host;
     }
 
@@ -21,7 +21,7 @@ internal static class WindowsPowerShell
     {
         // Never allow a profile to introduce a wildcard or additional list entries.
         if (string.IsNullOrWhiteSpace(host) || host.IndexOfAny(['*', '?', ',']) >= 0)
-            throw new FormatException("Укажите конкретное имя или IP-адрес сервера.");
+            throw new FormatException(global::mstscX.Services.L.T("Укажите конкретное имя или IP-адрес сервера."));
         string hostData = Convert.ToBase64String(Encoding.UTF8.GetBytes(host));
         string script = $$"""
             $ErrorActionPreference = 'Stop'
@@ -56,12 +56,12 @@ internal static class WindowsPowerShell
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223) { return false; }
         using (process)
         {
-            if (process is null) throw new InvalidOperationException("Не удалось запустить настройку TrustedHosts.");
+            if (process is null) throw new InvalidOperationException(global::mstscX.Services.L.T("Не удалось запустить настройку TrustedHosts."));
             await process.WaitForExitAsync();
             if (process.ExitCode == 2)
-                throw new InvalidOperationException("TrustedHosts управляется групповой политикой. Обратитесь к администратору компьютера.");
+                throw new InvalidOperationException(global::mstscX.Services.L.T("TrustedHosts управляется групповой политикой. Обратитесь к администратору компьютера."));
             if (process.ExitCode != 0 || !IsExplicitlyTrustedHost(host))
-                throw new InvalidOperationException("Не удалось добавить сервер в TrustedHosts. Проверьте права администратора и доступность службы WinRM на этом компьютере.");
+                throw new InvalidOperationException(global::mstscX.Services.L.T("Не удалось добавить сервер в TrustedHosts. Проверьте права администратора и доступность службы WinRM на этом компьютере."));
         }
         return true;
     }
@@ -77,7 +77,7 @@ internal static class WindowsPowerShell
         }
 
         if (!RdpEndpoint.TryParse(profile.Address, out var endpoint))
-            throw new FormatException("Укажите корректный адрес сервера в профиле.");
+            throw new FormatException(global::mstscX.Services.L.T("Укажите корректный адрес сервера в профиле."));
 
         string? pipeName = string.IsNullOrEmpty(password) ? null : $"mstscX.PowerShell.{Guid.NewGuid():N}";
         using var pipe = pipeName is null ? null : new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1,
@@ -134,7 +134,7 @@ internal static class WindowsPowerShell
         return $$"""
             $computerName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{{hostData}}'))
             $userName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{{userData}}'))
-            $message = "Вход на $computerName через WinRM ({{transport}}, порт {{port}})"
+            $message = {{PowerShellText("Вход на {0} через WinRM ({1}, порт {2})")}} -f $computerName, '{{transport}}', {{port}}
             $passwordPipe = '{{pipeName}}'
             Write-Host $message
             try {
@@ -149,9 +149,9 @@ internal static class WindowsPowerShell
                         $pipe.Connect(5000)
                         $reader = [IO.BinaryReader]::new($pipe)
                         $length = $reader.ReadInt32()
-                        if ($length -le 0 -or $length -gt 1048576 -or $length % 2) { throw 'Неверный размер пароля.' }
+                        if ($length -le 0 -or $length -gt 1048576 -or $length % 2) { throw {{PowerShellText("Неверный размер пароля.")}} }
                         $bytes = $reader.ReadBytes($length)
-                        if ($bytes.Length -ne $length) { throw 'Не удалось прочитать пароль полностью.' }
+                        if ($bytes.Length -ne $length) { throw {{PowerShellText("Не удалось прочитать пароль полностью.")}} }
                         $characters = [Text.Encoding]::Unicode.GetChars($bytes)
                         $secret = [Security.SecureString]::new()
                         foreach ($character in $characters) { $secret.AppendChar($character) }
@@ -159,7 +159,7 @@ internal static class WindowsPowerShell
                         $pipe.WriteByte(1)
                         $secret
                     }
-                    catch { Write-Warning 'Сохранённый пароль недоступен. Введите его вручную.' }
+                    catch { Write-Warning {{PowerShellText("Сохранённый пароль недоступен. Введите его вручную.")}} }
                     finally {
                         if ($bytes) { [Array]::Clear($bytes, 0, $bytes.Length) }
                         if ($characters) { [Array]::Clear($characters, 0, $characters.Length) }
@@ -168,7 +168,7 @@ internal static class WindowsPowerShell
                     }
                 }
                 if ($savedPassword) {
-                    if (!$userName) { $userName = Read-Host 'Имя пользователя' }
+                    if (!$userName) { $userName = Read-Host {{PowerShellText("Имя пользователя")}} }
                     $credential = [Management.Automation.PSCredential]::new($userName, $savedPassword)
                 }
                 else {
@@ -189,6 +189,8 @@ internal static class WindowsPowerShell
             }
             """;
     }
+
+    private static string PowerShellText(string source) => "'" + L.T(source).Replace("'", "''") + "'";
 
     private static bool IsExplicitlyTrustedHost(string host)
     {

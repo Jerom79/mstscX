@@ -15,7 +15,7 @@ internal static class RemoteAppInventory
     internal static Task<IReadOnlyList<PublishedRemoteApp>> ListAsync(string? address, NetworkCredential credential)
     {
         if (!RdpEndpoint.TryParse(address, out var endpoint))
-            throw new FormatException("Укажите корректный адрес сервера в разделе «Общие».");
+            throw new FormatException(global::mstscX.Services.L.T("Укажите корректный адрес сервера в разделе «Общие»."));
 
         return Task.Run(() => List(endpoint.Host, credential));
     }
@@ -35,9 +35,9 @@ internal static class RemoteAppInventory
             {
                 int code = ex is ManagementException wmiError ? (int)wmiError.ErrorCode : ex.HResult;
                 if (code == LogonFailed)
-                    throw new FormatException("Сервер не принял логин или пароль карточки (0x8007052E).", ex);
+                    throw new FormatException(global::mstscX.Services.L.T("Сервер не принял логин или пароль карточки (0x8007052E)."), ex);
                 if (code == RpcUnavailable)
-                    throw new FormatException("Сервер не отвечает на запрос WMI/RPC (0x800706BA).", ex);
+                    throw new FormatException(global::mstscX.Services.L.T("Сервер не отвечает на запрос WMI/RPC (0x800706BA)."), ex);
 
                 failures.Add((wmiNamespace, code, ex));
                 return null;
@@ -55,13 +55,13 @@ internal static class RemoteAppInventory
         foreach (var (wmiNamespace, code, error) in failures)
         {
             if (code is AccessDenied or (int)ManagementStatus.AccessDenied or unchecked((int)0x80041062))
-                throw new FormatException($"Учётной записи карточки отказано в чтении каталога WMI {wmiNamespace} (0x{code:X8}).", error);
+                throw new FormatException(global::mstscX.Services.L.F("Учётной записи карточки отказано в чтении каталога WMI {0} (0x{1:X8}).", wmiNamespace, code), error);
 
             if (code is not ((int)ManagementStatus.InvalidNamespace or (int)ManagementStatus.InvalidClass or (int)ManagementStatus.ProviderNotFound))
-                throw new FormatException($"Не удалось прочитать каталог WMI {wmiNamespace} (0x{code:X8}). {error.Message}", error);
+                throw new FormatException(global::mstscX.Services.L.F("Не удалось прочитать каталог WMI {0} (0x{1:X8}). {2}", wmiNamespace, code, error.Message), error);
         }
 
-        return hostApps ?? brokerApps ?? throw new FormatException("Сервер не предоставляет WMI-каталог RemoteApp (RDS).");
+        return hostApps ?? brokerApps ?? throw new FormatException(global::mstscX.Services.L.T("Сервер не предоставляет WMI-каталог RemoteApp (RDS)."));
     }
 
     internal static Task<byte[]?> ReadIconAsync(string? address, PublishedRemoteApp app, NetworkCredential credential)

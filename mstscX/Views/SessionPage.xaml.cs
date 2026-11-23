@@ -61,7 +61,7 @@ public partial class SessionPage : ContentView
         serverName = profile.Name;
         windowLayout = initialLayout with { FullScreen = false };
         ConnectionTitle.Text = SessionTitle;
-        SessionEndpoint.Text = $"Адрес: {RdpEndpoint.FormatForDisplay(address)}";
+        SessionEndpoint.Text = global::mstscX.Services.L.F("Адрес: {0}", RdpEndpoint.FormatForDisplay(address));
         this.readPassword = readPassword;
         this.onSessionConnected = onSessionConnected;
         this.onReconnectStatusChanged = onReconnectStatusChanged;
@@ -124,7 +124,7 @@ public partial class SessionPage : ContentView
             element.XamlRoot is not { } root || element.ActualWidth < 1 || element.ActualHeight < 1 ||
             getWindow()?.Handler?.PlatformView is not NativeWindow window)
         {
-            ReportFailure("Область удалённого рабочего стола пока недоступна.");
+            ReportFailure(global::mstscX.Services.L.T("Область удалённого рабочего стола пока недоступна."));
             return;
         }
 
@@ -175,7 +175,7 @@ public partial class SessionPage : ContentView
                 else
                 {
                     EndSession();
-                    viewModel.ReportDisconnected("Подключение завершено.");
+                    viewModel.ReportDisconnected(global::mstscX.Services.L.T("Подключение завершено."));
                 }
             });
             nextSession.ReconnectStatusChanged += message => element.DispatcherQueue.TryEnqueue(() =>
@@ -203,7 +203,7 @@ public partial class SessionPage : ContentView
         }
         catch (Exception ex) when (ex is ExternalException or DllNotFoundException or EntryPointNotFoundException)
         {
-            ReportFailure($"Не удалось запустить RDP (0x{ex.HResult:X8}). {ex.Message}");
+            ReportFailure(global::mstscX.Services.L.F("Не удалось запустить RDP (0x{0:X8}). {1}", ex.HResult, ex.Message));
         }
     }
 
@@ -595,7 +595,7 @@ public partial class SessionPage : ContentView
             if (HasEnded || session != current)
                 return;
 
-            const string status = "Переподключение для смены режима экрана…";
+            string status = global::mstscX.Services.L.T("Переподключение для смены режима экрана…");
             FullScreenTransitionTrace.Write("Report monitor reconnect status begin");
             viewModel.ReportDisconnected(status);
             onReconnectStatusChanged?.Invoke(status);
@@ -631,7 +631,7 @@ public partial class SessionPage : ContentView
         catch (ExternalException ex)
         {
             if (!HasEnded)
-                ReportFailure($"Не удалось сменить режим экрана (0x{ex.HResult:X8}). {ex.Message}");
+                ReportFailure(global::mstscX.Services.L.F("Не удалось сменить режим экрана (0x{0:X8}). {1}", ex.HResult, ex.Message));
         }
         finally
         {

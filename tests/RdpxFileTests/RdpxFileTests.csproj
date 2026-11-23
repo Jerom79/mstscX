@@ -4,5 +4,7 @@
     <Compile Include="../../mstscX/Services/RdpxFile.cs" Link="RdpxFile.cs" />
     <Compile Include="../../mstscX/Models/ServerProfile.cs" Link="ServerProfile.cs" />
     <Compile Include="../../mstscX/Models/RdpEndpoint.cs" Link="RdpEndpoint.cs" />
+    <Compile Include="../../mstscX/Services/L.cs" Link="L.cs" />
+    <EmbeddedResource Include="../../mstscX/Resources/Localization/en.json" LogicalName="mstscX.Localization.en.json" />
   </ItemGroup>
 </Project>

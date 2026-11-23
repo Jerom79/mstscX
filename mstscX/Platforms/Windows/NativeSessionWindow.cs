@@ -31,7 +31,7 @@ internal sealed class NativeSessionWindow
     private nint window, notice, noticeImage, noticeIcon, font, background;
     private readonly List<nint> ownedIcons = [];
     private string serverName;
-    private string status = "Подключение…";
+    private string status = global::mstscX.Services.L.T("Подключение…");
     private bool connected, wasConnected, closing, changingLayout, switchingMonitors;
     private bool nativeFullScreen, panelDrag, pendingMaximize, restoreToNormal;
     private bool movingWindow;
@@ -123,7 +123,7 @@ internal sealed class NativeSessionWindow
             return;
         HasEnded = false;
         connected = false;
-        status = "Подключение…";
+        status = global::mstscX.Services.L.T("Подключение…");
         UpdateStatus();
         try
         {
@@ -137,7 +137,7 @@ internal sealed class NativeSessionWindow
                 if (closing || session != current)
                     return;
                 connected = wasConnected = true;
-                status = "Подключено";
+                status = global::mstscX.Services.L.T("Подключено");
                 UpdateStatus();
                 UpdateLayout();
                 current.SetViewportVisible(true);
@@ -158,7 +158,7 @@ internal sealed class NativeSessionWindow
             {
                 if (closing || session != current)
                     return;
-                status = message ?? "Подключено";
+                status = message ?? global::mstscX.Services.L.T("Подключено");
                 UpdateStatus();
                 ReconnectStatusChanged?.Invoke(message);
             });
@@ -176,7 +176,7 @@ internal sealed class NativeSessionWindow
         catch (Exception ex) when (ex is ExternalException or Win32Exception or ArgumentException or
             DllNotFoundException or EntryPointNotFoundException)
         {
-            EndConnection($"Не удалось запустить RDP (0x{ex.HResult:X8}). {ex.Message}");
+            EndConnection(global::mstscX.Services.L.F("Не удалось запустить RDP (0x{0:X8}). {1}", ex.HResult, ex.Message));
         }
     }
 
@@ -313,7 +313,7 @@ internal sealed class NativeSessionWindow
             { System.Diagnostics.Debug.WriteLine(ex); }
             if (closing || session != current)
                 return;
-            status = "Переподключение для смены режима экрана…";
+            status = global::mstscX.Services.L.T("Переподключение для смены режима экрана…");
             ReconnectStatusChanged?.Invoke(status);
             connected = false;
             session = null;
@@ -332,7 +332,7 @@ internal sealed class NativeSessionWindow
         }
         catch (ExternalException ex)
         {
-            EndConnection($"Не удалось сменить режим экрана (0x{ex.HResult:X8}). {ex.Message}");
+            EndConnection(global::mstscX.Services.L.F("Не удалось сменить режим экрана (0x{0:X8}). {1}", ex.HResult, ex.Message));
         }
         finally
         {
@@ -390,7 +390,7 @@ internal sealed class NativeSessionWindow
         previous?.Dispose(disconnect: false);
         nativeFullScreen = false;
         RestoreWindow(false);
-        status = error ?? "Подключение завершено.";
+        status = error ?? global::mstscX.Services.L.T("Подключение завершено.");
         UpdateStatus();
         Ended?.Invoke(error);
     }
@@ -462,7 +462,7 @@ internal sealed class NativeSessionWindow
 
     private void UpdateStatus()
     {
-        SetWindowText(notice, $"Адрес: {RdpEndpoint.FormatForDisplay(address)}\r\n\r\n{status}");
+        SetWindowText(notice, global::mstscX.Services.L.F("Адрес: {0}\r\n\r\n{1}", RdpEndpoint.FormatForDisplay(address), status));
         ShowWindow(notice, connected ? 0 : 4);
         ShowWindow(noticeImage, connected || noticeIcon == 0 ? 0 : 4);
         UpdateLayout();
@@ -663,7 +663,7 @@ internal sealed class NativeSessionWindow
             // Managed exceptions must not cross the unmanaged window-procedure boundary.
             System.Diagnostics.Debug.WriteLine(ex);
             FullScreenTransitionTrace.Write($"Win32 window handler failed message=0x{message:X4} error=0x{ex.HResult:X8}");
-            instance.dispatcher.TryEnqueue(() => instance.EndConnection($"Ошибка окна подключения (0x{ex.HResult:X8}). {ex.Message}"));
+            instance.dispatcher.TryEnqueue(() => instance.EndConnection(global::mstscX.Services.L.F("Ошибка окна подключения (0x{0:X8}). {1}", ex.HResult, ex.Message)));
             return DefWindowProc(window, message, wParam, lParam);
         }
     }

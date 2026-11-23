@@ -65,10 +65,10 @@ internal sealed class MainFullScreenMenu : IDisposable
             Orientation = Microsoft.UI.Xaml.Controls.Orientation.Horizontal,
             VerticalAlignment = Microsoft.UI.Xaml.VerticalAlignment.Center
         };
-        controls.Children.Add(CreateButton("\uE73F", "Выйти из полноэкранного режима", exitFullScreen));
-        controls.Children.Add(CreateButton("\uE921", "Свернуть", () => ShowWindow(window, 6)));
-        controls.Children.Add(CreateButton("\uE922", "Развернуть окно", maximize));
-        controls.Children.Add(CreateButton("\uE8BB", "Закрыть", close));
+        controls.Children.Add(CreateButton("\uE73F", global::mstscX.Services.L.T("Выйти из полноэкранного режима"), exitFullScreen));
+        controls.Children.Add(CreateButton("\uE921", global::mstscX.Services.L.T("Свернуть"), () => ShowWindow(window, 6)));
+        controls.Children.Add(CreateButton("\uE922", global::mstscX.Services.L.T("Развернуть окно"), maximize));
+        controls.Children.Add(CreateButton("\uE8BB", global::mstscX.Services.L.T("Закрыть"), close));
         var layout = new Microsoft.UI.Xaml.Controls.Grid();
         layout.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         layout.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) });

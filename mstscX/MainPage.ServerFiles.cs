@@ -12,9 +12,9 @@ public partial class MainPage
         try
         {
             if ((viewModel.Profiles.Count > 0 || OpenSessionCount > 0) &&
-                !await DisplayAlertAsync("Заменить список серверов?",
-                    "Текущие данные серверов будут удалены и заменены данными из файла. Открытые соединения будут отключены. Продолжить?",
-                    "Заменить", "Отмена")) return;
+                !await DisplayAlertAsync(global::mstscX.Services.L.T("Заменить список серверов?"),
+                    global::mstscX.Services.L.T("Текущие данные серверов будут удалены и заменены данными из файла. Открытые соединения будут отключены. Продолжить?"),
+                    global::mstscX.Services.L.T("Заменить"), global::mstscX.Services.L.T("Отмена"))) return;
             // Persist the validated replacement before disconnecting the old sessions.
             viewModel.ReplaceProfiles(profiles);
             foreach (var session in embeddedSessions.Values.ToArray()) session.EndSession();
@@ -23,7 +23,7 @@ public partial class MainPage
             connectionErrors.Clear();
             reconnectStatuses.Clear();
             ShowSettings(false);
-            viewModel.ReportFileStatus($"Загружено серверов: {profiles.Count}.");
+            viewModel.ReportFileStatus(global::mstscX.Services.L.F("Загружено серверов: {0}.", profiles.Count));
         }
         finally { UpdateSelectedSession(); }
     }
@@ -37,7 +37,7 @@ public partial class MainPage
             if (await picker.PickSingleFileAsync() is { } file) await OpenServerFileAsync(file.Path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
-        { viewModel.ReportFileStatus("Не удалось открыть список серверов."); }
+        { viewModel.ReportFileStatus(global::mstscX.Services.L.T("Не удалось открыть список серверов.")); }
     }
 
     private async Task OpenServerFileAsync(string path)
@@ -55,12 +55,12 @@ public partial class MainPage
                 await using var stream = File.OpenRead(path);
                 profiles = [await Services.RdpFileImport.ReadAsync(stream, Path.GetFileNameWithoutExtension(path))];
             }
-            else throw new FormatException("Поддерживаются файлы .rdp и .rdpx.");
+            else throw new FormatException(global::mstscX.Services.L.T("Поддерживаются файлы .rdp и .rdpx."));
             await ReplaceServerListAsync(profiles);
         }
         catch (Exception ex) when (ex is FormatException or System.Text.Json.JsonException or IOException or
             UnauthorizedAccessException or ArgumentException or System.Runtime.InteropServices.COMException)
-        { viewModel.ReportFileStatus($"Не удалось открыть файл: {ex.Message}"); }
+        { viewModel.ReportFileStatus(global::mstscX.Services.L.F("Не удалось открыть файл: {0}", ex.Message)); }
         finally { rdpFileOperationInProgress = false; }
     }
 
@@ -72,18 +72,18 @@ public partial class MainPage
         {
             var picker = new FileSavePicker(owner.AppWindow.Id)
             {
-                SuggestedFileName = "Серверы",
+                SuggestedFileName = global::mstscX.Services.L.T("Серверы"),
                 DefaultFileExtension = ".rdpx",
-                FileTypeChoices = { { "Список серверов", new List<string> { ".rdpx" } } }
+                FileTypeChoices = { { global::mstscX.Services.L.T("Список серверов"), new List<string> { ".rdpx" } } }
             };
             if (await picker.PickSaveFileAsync() is not { } file) return;
             if (!Path.GetExtension(file.Path).Equals(".rdpx", StringComparison.OrdinalIgnoreCase))
-                throw new FormatException("Укажите расширение .rdpx.");
+                throw new FormatException(global::mstscX.Services.L.T("Укажите расширение .rdpx."));
             await Services.RdpxFile.WriteAsync(file.Path, viewModel.Profiles);
-            viewModel.ReportFileStatus("Список серверов сохранён.");
+            viewModel.ReportFileStatus(global::mstscX.Services.L.T("Список серверов сохранён."));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or System.Runtime.InteropServices.COMException)
-        { viewModel.ReportFileStatus($"Не удалось сохранить список: {ex.Message}"); }
+        { viewModel.ReportFileStatus(global::mstscX.Services.L.F("Не удалось сохранить список: {0}", ex.Message)); }
         finally { rdpFileOperationInProgress = false; }
     }
 }

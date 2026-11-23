@@ -95,7 +95,7 @@ internal sealed class RdpSession : IDisposable
         bool useNativeRemoteAppHost = false)
     {
         if (useNativeRemoteAppHost && remoteAppWorkArea is null)
-            throw new ArgumentException("Хост Win32 для RemoteApp требует рабочую область приложения.", nameof(remoteAppWorkArea));
+            throw new ArgumentException(global::mstscX.Services.L.T("Хост Win32 для RemoteApp требует рабочую область приложения."), nameof(remoteAppWorkArea));
         this.parentWindow = parentWindow;
         this.useXamlComposition = useXamlComposition && !useNativeRemoteAppHost;
         this.remoteAppWorkArea = remoteAppWorkArea;
@@ -126,7 +126,7 @@ internal sealed class RdpSession : IDisposable
         onFatalError = code =>
         {
             remoteWindowTimer?.Stop();
-            Disconnected?.Invoke(WithReconnectFailure($"Ошибка RDP (код {code})."));
+            Disconnected?.Invoke(WithReconnectFailure(global::mstscX.Services.L.F("Ошибка RDP (код {0}).", code)));
         };
         onAutoReconnecting = (reason, networkAvailable, attempt, limit) =>
         {
@@ -134,8 +134,8 @@ internal sealed class RdpSession : IDisposable
             reconnectAttempt = attempt;
             reconnectLimit = limit;
             missingRemoteWindowChecks = 0;
-            string networkStatus = networkAvailable ? "" : " Сеть недоступна.";
-            ReconnectStatusChanged?.Invoke($"Восстанавливаем соединение. {FormatReconnectAttempt()}{networkStatus}");
+            string networkStatus = networkAvailable ? "" : global::mstscX.Services.L.T(" Сеть недоступна.");
+            ReconnectStatusChanged?.Invoke(global::mstscX.Services.L.F("Восстанавливаем соединение. {0}{1}", FormatReconnectAttempt(), networkStatus));
         };
         onAutoReconnected = () =>
         {
@@ -152,7 +152,7 @@ internal sealed class RdpSession : IDisposable
                 Connected?.Invoke();
             }
             else
-                Disconnected?.Invoke($"Сервер не запустил RemoteApp (код {result}).");
+                Disconnected?.Invoke(global::mstscX.Services.L.F("Сервер не запустил RemoteApp (код {0}).", result));
         };
         onRemoteWindowDisplayed = TrackRemoteAppWindow;
 
@@ -266,7 +266,7 @@ internal sealed class RdpSession : IDisposable
     {
         var rdp = client ?? throw new ObjectDisposedException(nameof(RdpSession));
         if (!RdpEndpoint.TryParse(address, out var endpoint))
-            throw new ArgumentException("Некорректный адрес RDP.", nameof(address));
+            throw new ArgumentException(global::mstscX.Services.L.T("Некорректный адрес RDP."), nameof(address));
         rdp.Server = endpoint.Host;
 #if DEBUG
         simulateReconnect = endpoint.Host.Equals(Environment.GetEnvironmentVariable("mstscX_DEBUG_RECONNECT_HOST"),
@@ -381,7 +381,7 @@ internal sealed class RdpSession : IDisposable
         if (profile?.RemoteApp is { Enabled: true } app)
         {
             if (string.IsNullOrWhiteSpace(app.Program))
-                throw new COMException("Укажите опубликованное приложение RemoteApp в профиле.");
+                throw new COMException(global::mstscX.Services.L.T("Укажите опубликованное приложение RemoteApp в профиле."));
 
             remoteApp = app;
             ComEventsHelper.Combine(rdp, EventsInterface, RemoteProgramResultEvent, onRemoteProgramResult);
@@ -672,7 +672,7 @@ internal sealed class RdpSession : IDisposable
             if (gateway.UsesConfiguredGateway)
             {
                 if (gateway.CredentialSource == 5)
-                    throw new COMException("Этот шлюз требует веб-аутентификации во внешнем RDP-клиенте.");
+                    throw new COMException(global::mstscX.Services.L.T("Этот шлюз требует веб-аутентификации во внешнем RDP-клиенте."));
 
                 transport.GatewayProfileUsageMethod = gateway.UseExplicitProfile ? 1u : 0u;
                 if (!string.IsNullOrWhiteSpace(gateway.HostName))
@@ -846,7 +846,7 @@ internal sealed class RdpSession : IDisposable
         }
         catch (COMException ex)
         {
-            Disconnected?.Invoke($"Не удалось запустить RemoteApp (0x{ex.HResult:X8}). {ex.Message}");
+            Disconnected?.Invoke(global::mstscX.Services.L.F("Не удалось запустить RemoteApp (0x{0:X8}). {1}", ex.HResult, ex.Message));
         }
     }
 
@@ -1125,19 +1125,19 @@ internal sealed class RdpSession : IDisposable
             }
         }
 
-        string codes = extendedReason == 0 ? $"{reason}" : $"{reason}, дополнительный код {extendedReason}";
-        string message = $"Соединение завершено (код {codes}).";
+        string codes = extendedReason == 0 ? $"{reason}" : global::mstscX.Services.L.F("{0}, дополнительный код {1}", reason, extendedReason);
+        string message = global::mstscX.Services.L.F("Соединение завершено (код {0}).", codes);
         if (!string.IsNullOrWhiteSpace(description))
             message += $" {description}";
         Disconnected?.Invoke(WithReconnectFailure(message));
     }
 
     private string FormatReconnectAttempt() => reconnectLimit > 0
-        ? $"Попытка {reconnectAttempt} из {reconnectLimit}."
-        : $"Попытка {reconnectAttempt}.";
+        ? global::mstscX.Services.L.F("Попытка {0} из {1}.", reconnectAttempt, reconnectLimit)
+        : global::mstscX.Services.L.F("Попытка {0}.", reconnectAttempt);
 
     private string WithReconnectFailure(string message) => reconnectReason is { } reason
-        ? $"Не удалось восстановить соединение. {FormatReconnectAttempt()} Причина обрыва RDP: {reason}. {message}"
+        ? global::mstscX.Services.L.F("Не удалось восстановить соединение. {0} Причина обрыва RDP: {1}. {2}", FormatReconnectAttempt(), reason, message)
         : message;
 
     public void Dispose() => Dispose(disconnect: true);

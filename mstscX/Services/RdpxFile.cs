@@ -12,10 +12,10 @@ internal static class RdpxFile
     internal static async Task<List<ServerProfile>> ReadAsync(string path)
     {
         await using var stream = File.OpenRead(path);
-        if (stream.Length > 32 * 1024 * 1024) throw new FormatException("Файл списка слишком большой.");
+        if (stream.Length > 32 * 1024 * 1024) throw new FormatException(global::mstscX.Services.L.T("Файл списка слишком большой."));
         var document = await JsonSerializer.DeserializeAsync<Document>(stream, Options);
         if (document is not { Format: "MSTSC_MAUI.rdpx", Version: 1, Servers: not null })
-            throw new FormatException("Неподдерживаемый формат или версия списка RDPX.");
+            throw new FormatException(global::mstscX.Services.L.T("Неподдерживаемый формат или версия списка RDPX."));
         var ids = new HashSet<Guid>();
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var server in document.Servers)
@@ -23,7 +23,7 @@ internal static class RdpxFile
             if (server is null || string.IsNullOrWhiteSpace(server.Name) || !names.Add(server.Name.Trim()) ||
                 !RdpEndpoint.TryParse(server.Address, out _) || server.Display is null ||
                 server.Resources is null || server.RemoteApp is null || server.Gateway is null)
-                throw new FormatException("Список содержит некорректные или повторяющиеся профили.");
+                throw new FormatException(global::mstscX.Services.L.T("Список содержит некорректные или повторяющиеся профили."));
             if (server.Id == Guid.Empty || !ids.Add(server.Id))
             {
                 server.Id = Guid.NewGuid();

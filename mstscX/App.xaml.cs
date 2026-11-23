@@ -8,6 +8,7 @@ namespace mstscX
 
         public App(IServiceProvider services)
         {
+            Services.LanguageSettings.Initialize();
             InitializeComponent();
             Services.ThemeSettings.Apply(this, Services.ThemeSettings.SelectedIndex);
             this.services = services;

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:loc="clr-namespace:mstscX.Services"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:winui="clr-namespace:mstscX.WinUI"
              xmlns:vm="clr-namespace:mstscX.ViewModels"
@@ -50,7 +51,7 @@
                 BackgroundColor="{AppThemeBinding Light=#EAF0FA, Dark=#182234}">
             <VerticalStackLayout Spacing="5">
                 <Grid>
-                    <Button Text="Общие" Style="{StaticResource SectionButton}"
+                    <Button Text="{loc:Text Key=S72E67FB326D9}" Style="{StaticResource SectionButton}"
                             HandlerChanged="OnSectionButtonHandlerChanged" Command="{Binding SelectEditorTabCommand}" CommandParameter="0">
                         <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ShowGeneral}" Value="True">
                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#D8E8FF, Dark=#29446E}" />
@@ -59,7 +60,7 @@
                     <Image Style="{StaticResource SectionIcon}" Source="{AppThemeBinding Light={winui:InterfaceImage Name=nav_settings_light}, Dark={winui:InterfaceImage Name=nav_settings_dark}}" />
                 </Grid>
                 <Grid>
-                    <Button Text="Экран" Style="{StaticResource SectionButton}"
+                    <Button Text="{loc:Text Key=SC062341615DC}" Style="{StaticResource SectionButton}"
                             HandlerChanged="OnSectionButtonHandlerChanged" Command="{Binding SelectEditorTabCommand}" CommandParameter="1">
                         <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ShowDisplay}" Value="True">
                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#D8E8FF, Dark=#29446E}" />
@@ -68,7 +69,7 @@
                     <Image Style="{StaticResource SectionIcon}" Source="{AppThemeBinding Light={winui:InterfaceImage Name=nav_display_light}, Dark={winui:InterfaceImage Name=nav_display_dark}}" />
                 </Grid>
                 <Grid>
-                    <Button Text="Локальные ресурсы" Style="{StaticResource SectionButton}"
+                    <Button Text="{loc:Text Key=SEEF10D8311F5}" Style="{StaticResource SectionButton}"
                             HandlerChanged="OnSectionButtonHandlerChanged" Command="{Binding SelectEditorTabCommand}" CommandParameter="2">
                         <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ShowResources}" Value="True">
                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#D8E8FF, Dark=#29446E}" />
@@ -86,7 +87,7 @@
                     <Image Style="{StaticResource SectionIcon}" Source="{AppThemeBinding Light={winui:InterfaceImage Name=nav_remote_app_light}, Dark={winui:InterfaceImage Name=nav_remote_app_dark}}" />
                 </Grid>
                 <Grid>
-                    <Button Text="Шлюз RD" Style="{StaticResource SectionButton}"
+                    <Button Text="{loc:Text Key=S4ACD15403415}" Style="{StaticResource SectionButton}"
                             HandlerChanged="OnSectionButtonHandlerChanged" Command="{Binding SelectEditorTabCommand}" CommandParameter="4">
                         <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding ShowGateway}" Value="True">
                             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#D8E8FF, Dark=#29446E}" />
@@ -102,9 +103,9 @@
                 <ScrollView Padding="20,16">
                     <VerticalStackLayout>
                 <VerticalStackLayout IsVisible="{Binding ShowGeneral}" Spacing="6">
-                    <Label Text="Общие" Style="{StaticResource SectionTitle}" SemanticProperties.HeadingLevel="Level1" />
-                    <Label Text="Наименование" Style="{StaticResource FieldTitle}" />
-                    <Entry TextChanged="OnEditorFieldChanged" Text="{Binding ProfileName}" SemanticProperties.Description="Наименование" />
+                    <Label Text="{loc:Text Key=S72E67FB326D9}" Style="{StaticResource SectionTitle}" SemanticProperties.HeadingLevel="Level1" />
+                    <Label Text="{loc:Text Key=S114AA62EC743}" Style="{StaticResource FieldTitle}" />
+                    <Entry TextChanged="OnEditorFieldChanged" Text="{Binding ProfileName}" SemanticProperties.Description="{loc:Text Key=S114AA62EC743}" />
                     <Label Text="{Binding ProfileNameError}" TextColor="{AppThemeBinding Light=#A4262C, Dark=#FF9B9B}">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding ProfileNameError}" Value="">
@@ -112,20 +113,20 @@
                             </DataTrigger>
                         </Label.Triggers>
                     </Label>
-                    <Label Text="Адрес подключения" Style="{StaticResource FieldTitle}" />
-                    <Entry TextChanged="OnEditorFieldChanged" Text="{Binding ProfileAddress}" Placeholder="server.example.com" SemanticProperties.Description="Адрес подключения" />
-                    <Label Text="Логин" Style="{StaticResource FieldTitle}" />
-                    <Entry TextChanged="OnEditorFieldChanged" Text="{Binding ProfileUserName}" Placeholder="DOMAIN\user" SemanticProperties.Description="Логин" />
-                    <Label Text="Пароль" Style="{StaticResource FieldTitle}" />
-                    <Entry TextChanged="OnEditorFieldChanged" Text="{Binding ProfilePassword}" IsPassword="True" SemanticProperties.Description="Пароль" />
+                    <Label Text="{loc:Text Key=S771987B20028}" Style="{StaticResource FieldTitle}" />
+                    <Entry TextChanged="OnEditorFieldChanged" Text="{Binding ProfileAddress}" Placeholder="server.example.com" SemanticProperties.Description="{loc:Text Key=S771987B20028}" />
+                    <Label Text="{loc:Text Key=S5BE12BFE49EA}" Style="{StaticResource FieldTitle}" />
+                    <Entry TextChanged="OnEditorFieldChanged" Text="{Binding ProfileUserName}" Placeholder="DOMAIN\user" SemanticProperties.Description="{loc:Text Key=S5BE12BFE49EA}" />
+                    <Label Text="{loc:Text Key=SCB1A2074B3A0}" Style="{StaticResource FieldTitle}" />
+                    <Entry TextChanged="OnEditorFieldChanged" Text="{Binding ProfilePassword}" IsPassword="True" SemanticProperties.Description="{loc:Text Key=SCB1A2074B3A0}" />
                     <VerticalStackLayout IsVisible="{Binding HasSavedPassword}">
-                        <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding RemovePassword, Mode=TwoWay}" SemanticProperties.Description="Удалить сохранённый пароль" /><Label Text="Удалить сохранённый пароль" VerticalOptions="Center" /></HorizontalStackLayout>
-                        <Label Text="Пароль сохранён. Оставьте поле пустым, чтобы сохранить его." />
+                        <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding RemovePassword, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SD4C3AC1FDDA1}" /><Label Text="{loc:Text Key=SD4C3AC1FDDA1}" VerticalOptions="Center" /></HorizontalStackLayout>
+                        <Label Text="{loc:Text Key=S1D50C3EE25A3}" />
                     </VerticalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding TrustProfile, Mode=TwoWay}" SemanticProperties.Description="Доверять этому серверу" /><Label Text="Доверять этому серверу" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding TrustProfile, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SC02078422ED4}" /><Label Text="{loc:Text Key=SC02078422ED4}" VerticalOptions="Center" /></HorizontalStackLayout>
                 </VerticalStackLayout>
                 <VerticalStackLayout IsVisible="{Binding ShowDisplay}" Spacing="6">
-                    <Label Text="Экран" Style="{StaticResource SectionTitle}" SemanticProperties.HeadingLevel="Level1" />
+                    <Label Text="{loc:Text Key=SC062341615DC}" Style="{StaticResource SectionTitle}" SemanticProperties.HeadingLevel="Level1" />
                     <HorizontalStackLayout Spacing="6">
                         <HorizontalStackLayout.Triggers>
                             <DataTrigger TargetType="HorizontalStackLayout" Binding="{Binding RemoteAppEnabled}" Value="True">
@@ -133,57 +134,57 @@
                             </DataTrigger>
                         </HorizontalStackLayout.Triggers>
                         <CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding OpenInSeparateWindow, Mode=TwoWay}"
-                                  SemanticProperties.Description="В отдельном окне" />
-                        <Label Text="В отдельном окне" VerticalOptions="Center" />
+                                  SemanticProperties.Description="{loc:Text Key=S1C26FCB3F7EB}" />
+                        <Label Text="{loc:Text Key=S1C26FCB3F7EB}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
-                    <Label Text="Разрешение удалённого рабочего стола" Style="{StaticResource FieldTitle}" />
-                    <Picker SelectedIndexChanged="OnEditorFieldChanged" Title="Разрешение" SelectedIndex="{Binding Display.Resolution, Mode=TwoWay}"><Picker.Items><x:String>По размеру окна</x:String><x:String>1024 × 768</x:String><x:String>1280 × 720</x:String><x:String>1600 × 900</x:String><x:String>1920 × 1080</x:String><x:String>2560 × 1440</x:String></Picker.Items></Picker>
-                    <Label Text="Глубина цвета" Style="{StaticResource FieldTitle}" />
-                    <Picker SelectedIndexChanged="OnEditorFieldChanged" Title="Цвета" SelectedIndex="{Binding Display.Colors, Mode=TwoWay}"><Picker.Items><x:String>32 бита</x:String><x:String>24 бита</x:String><x:String>16 бит</x:String><x:String>15 бит</x:String></Picker.Items></Picker>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.FullScreen, Mode=TwoWay}" SemanticProperties.Description="Подключаться в полноэкранном режиме" /><Label Text="Подключаться в полноэкранном режиме" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <Label Text="{loc:Text Key=S3D54F11D550D}" Style="{StaticResource FieldTitle}" />
+                    <Picker SelectedIndexChanged="OnEditorFieldChanged" Title="{loc:Text Key=SADC3B01F3C15}" SelectedIndex="{Binding Display.Resolution, Mode=TwoWay}"><Picker.Items><loc:Text Key="SD00F8C0B7540" /><x:String>1024 × 768</x:String><x:String>1280 × 720</x:String><x:String>1600 × 900</x:String><x:String>1920 × 1080</x:String><x:String>2560 × 1440</x:String></Picker.Items></Picker>
+                    <Label Text="{loc:Text Key=SC63C23CD16CA}" Style="{StaticResource FieldTitle}" />
+                    <Picker SelectedIndexChanged="OnEditorFieldChanged" Title="{loc:Text Key=S88E76BDB0CB8}" SelectedIndex="{Binding Display.Colors, Mode=TwoWay}"><Picker.Items><loc:Text Key="SAE44B5E7CA8A" /><loc:Text Key="S10168E99283B" /><loc:Text Key="S4C5D6DC1A701" /><loc:Text Key="SE109BA7D3CC0" /></Picker.Items></Picker>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.FullScreen, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=S03F52D35F4EA}" /><Label Text="{loc:Text Key=S03F52D35F4EA}" VerticalOptions="Center" /></HorizontalStackLayout>
                     <HorizontalStackLayout Spacing="6">
                         <HorizontalStackLayout.Triggers><DataTrigger TargetType="HorizontalStackLayout" Binding="{Binding RemoteAppEnabled}" Value="True">
                             <Setter Property="IsVisible" Value="False" />
                         </DataTrigger></HorizontalStackLayout.Triggers>
                         <CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.UseMultimon, Mode=TwoWay}"
-                                  SemanticProperties.Description="Использовать все мониторы в полноэкранном режиме" />
-                        <Label Text="Использовать все мониторы в полноэкранном режиме" VerticalOptions="Center" />
+                                  SemanticProperties.Description="{loc:Text Key=S57581596ABC9}" />
+                        <Label Text="{loc:Text Key=S57581596ABC9}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
-                    <Label Text="Производительность" Style="{StaticResource FieldTitle}" />
+                    <Label Text="{loc:Text Key=S89CC0E40297F}" Style="{StaticResource FieldTitle}" />
                     <Picker SelectedIndexChanged="OnEditorFieldChanged" SelectedIndex="{Binding Display.ConnectionType, Mode=TwoWay}"
-                            SemanticProperties.Description="Тип подключения">
+                            SemanticProperties.Description="{loc:Text Key=SB093C169360A}">
                         <Picker.Items>
-                            <x:String>По умолчанию</x:String><x:String>Модем</x:String><x:String>Медленный широкополосный канал</x:String>
-                            <x:String>Спутниковое соединение</x:String><x:String>Быстрый широкополосный канал</x:String>
-                            <x:String>Глобальная сеть</x:String><x:String>Локальная сеть</x:String><x:String>Определять автоматически</x:String>
+                            <loc:Text Key="SFD0560EBBF83" /><loc:Text Key="SDC14B2A2153C" /><loc:Text Key="S8CF7A4131981" />
+                            <loc:Text Key="SB6C0E8A3D4CB" /><loc:Text Key="S6505C93CDD8B" />
+                            <loc:Text Key="S0AC0446807B5" /><loc:Text Key="S7DE9E2BE0DD6" /><loc:Text Key="SEF8F09E7240D" />
                         </Picker.Items>
                     </Picker>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.DisableWallpaper, Mode=TwoWay}" SemanticProperties.Description="Скрывать обои" /><Label Text="Скрывать обои" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.DisableFullWindowDrag, Mode=TwoWay}" SemanticProperties.Description="Показывать только контур при перетаскивании окон" /><Label Text="Показывать только контур при перетаскивании окон" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.DisableMenuAnimations, Mode=TwoWay}" SemanticProperties.Description="Отключить анимацию меню" /><Label Text="Отключить анимацию меню" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.FontSmoothing, Mode=TwoWay}" SemanticProperties.Description="Сглаживать шрифты" /><Label Text="Сглаживать шрифты" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.VideoPlayback, Mode=TwoWay}" SemanticProperties.Description="Оптимизировать воспроизведение видео" /><Label Text="Оптимизировать воспроизведение видео" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.DisableWallpaper, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=S56459A1A94A1}" /><Label Text="{loc:Text Key=S56459A1A94A1}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.DisableFullWindowDrag, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=S96BAAEE693D6}" /><Label Text="{loc:Text Key=S96BAAEE693D6}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.DisableMenuAnimations, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SE0AB17495424}" /><Label Text="{loc:Text Key=SE0AB17495424}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.FontSmoothing, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=S53B83B912807}" /><Label Text="{loc:Text Key=S53B83B912807}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Display.VideoPlayback, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=S1BDAA9274BB8}" /><Label Text="{loc:Text Key=S1BDAA9274BB8}" VerticalOptions="Center" /></HorizontalStackLayout>
                 </VerticalStackLayout>
                 <VerticalStackLayout IsVisible="{Binding ShowResources}" Spacing="6">
-                    <Label Text="Локальные ресурсы" Style="{StaticResource SectionTitle}" SemanticProperties.HeadingLevel="Level1" />
-                    <Label Text="Воспроизведение звука" Style="{StaticResource FieldTitle}" />
-                    <Picker SelectedIndexChanged="OnEditorFieldChanged" Title="Звук" SelectedIndex="{Binding Resources.AudioPlayback, Mode=TwoWay}"><Picker.Items><x:String>На этом компьютере</x:String><x:String>На удалённом компьютере</x:String><x:String>Не воспроизводить</x:String></Picker.Items></Picker>
-                    <Label Text="Качество звука" Style="{StaticResource FieldTitle}" />
+                    <Label Text="{loc:Text Key=SEEF10D8311F5}" Style="{StaticResource SectionTitle}" SemanticProperties.HeadingLevel="Level1" />
+                    <Label Text="{loc:Text Key=S532C4A60FE13}" Style="{StaticResource FieldTitle}" />
+                    <Picker SelectedIndexChanged="OnEditorFieldChanged" Title="{loc:Text Key=S6A40CA96136A}" SelectedIndex="{Binding Resources.AudioPlayback, Mode=TwoWay}"><Picker.Items><loc:Text Key="S24AD0188257F" /><loc:Text Key="S781EEC4F5DDB" /><loc:Text Key="S7B3DCCBF58C7" /></Picker.Items></Picker>
+                    <Label Text="{loc:Text Key=S995011F87D4B}" Style="{StaticResource FieldTitle}" />
                     <Picker SelectedIndexChanged="OnEditorFieldChanged" SelectedIndex="{Binding Resources.AudioQuality, Mode=TwoWay}"
-                            SemanticProperties.Description="Качество звука">
-                        <Picker.Items><x:String>Автоматически</x:String><x:String>Среднее (со сжатием)</x:String><x:String>Высокое (без сжатия)</x:String></Picker.Items>
+                            SemanticProperties.Description="{loc:Text Key=S995011F87D4B}">
+                        <Picker.Items><loc:Text Key="S353CF589E95B" /><loc:Text Key="SD271CDFB57A0" /><loc:Text Key="S28100B158C2A" /></Picker.Items>
                     </Picker>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.AudioRecording, Mode=TwoWay}" SemanticProperties.Description="Запись звука с этого компьютера" /><Label Text="Запись звука с этого компьютера" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <Label Text="Сочетания клавиш Windows" Style="{StaticResource FieldTitle}" />
-                    <Picker SelectedIndexChanged="OnEditorFieldChanged" Title="Клавиатура" SelectedIndex="{Binding Resources.Keyboard, Mode=TwoWay}"><Picker.Items><x:String>На этом компьютере</x:String><x:String>На удалённом компьютере</x:String><x:String>Только в полноэкранном режиме</x:String></Picker.Items></Picker>
-                    <Label Text="Локальные устройства и ресурсы" Style="{StaticResource FieldTitle}" />
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Printers, Mode=TwoWay}" SemanticProperties.Description="Принтеры" /><Label Text="Принтеры" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Clipboard, Mode=TwoWay}" SemanticProperties.Description="Буфер обмена" /><Label Text="Буфер обмена" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Drives, Mode=TwoWay}" SemanticProperties.Description="Диски" /><Label Text="Диски" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.AudioRecording, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SA7A52F41D9F4}" /><Label Text="{loc:Text Key=SA7A52F41D9F4}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <Label Text="{loc:Text Key=S4EA0BD1C1A82}" Style="{StaticResource FieldTitle}" />
+                    <Picker SelectedIndexChanged="OnEditorFieldChanged" Title="{loc:Text Key=SF64F742BE7CB}" SelectedIndex="{Binding Resources.Keyboard, Mode=TwoWay}"><Picker.Items><loc:Text Key="S24AD0188257F" /><loc:Text Key="S781EEC4F5DDB" /><loc:Text Key="SCC95DC60C73E" /></Picker.Items></Picker>
+                    <Label Text="{loc:Text Key=SA1560F3C8B7B}" Style="{StaticResource FieldTitle}" />
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Printers, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SFC7ABA035ABC}" /><Label Text="{loc:Text Key=SFC7ABA035ABC}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Clipboard, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SEB31594AB4F1}" /><Label Text="{loc:Text Key=SEB31594AB4F1}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Drives, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SE9CD5D2DC6AB}" /><Label Text="{loc:Text Key=SE9CD5D2DC6AB}" VerticalOptions="Center" /></HorizontalStackLayout>
                     <VerticalStackLayout IsVisible="{Binding Resources.Drives}" Margin="24,0,0,0" Spacing="4">
                         <HorizontalStackLayout Spacing="6">
-                            <CheckBox IsChecked="{Binding RedirectAllDrives, Mode=TwoWay}" SemanticProperties.Description="Все диски" />
-                            <Label Text="Все диски" VerticalOptions="Center" />
+                            <CheckBox IsChecked="{Binding RedirectAllDrives, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SB3D7DFA98D0E}" />
+                            <Label Text="{loc:Text Key=SB3D7DFA98D0E}" VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <VerticalStackLayout Spacing="4">
                             <VerticalStackLayout.Triggers><DataTrigger TargetType="VerticalStackLayout" Binding="{Binding RedirectAllDrives}" Value="True">
@@ -200,25 +201,25 @@
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
                             <HorizontalStackLayout Spacing="6">
-                                <CheckBox IsChecked="{Binding RedirectNewDrives, Mode=TwoWay}" SemanticProperties.Description="Диски, подключённые во время сеанса" />
-                                <Label Text="Диски, подключённые во время сеанса" VerticalOptions="Center" />
+                                <CheckBox IsChecked="{Binding RedirectNewDrives, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SA6498C804D2F}" />
+                                <Label Text="{loc:Text Key=SA6498C804D2F}" VerticalOptions="Center" />
                             </HorizontalStackLayout>
                         </VerticalStackLayout>
                     </VerticalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Ports, Mode=TwoWay}" SemanticProperties.Description="Порты" /><Label Text="Порты" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.SmartCards, Mode=TwoWay}" SemanticProperties.Description="Смарт-карты" /><Label Text="Смарт-карты" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Devices, Mode=TwoWay}" SemanticProperties.Description="Поддерживаемые устройства Plug and Play" /><Label Text="Поддерживаемые устройства Plug and Play" VerticalOptions="Center" /></HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.PointOfSaleDevices, Mode=TwoWay}" SemanticProperties.Description="Устройства POS" /><Label Text="Устройства POS" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Ports, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SBF941C42D827}" /><Label Text="{loc:Text Key=SBF941C42D827}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.SmartCards, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=SC520F0849C3B}" /><Label Text="{loc:Text Key=SC520F0849C3B}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.Devices, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=S5A57224DF4E3}" /><Label Text="{loc:Text Key=S5A57224DF4E3}" VerticalOptions="Center" /></HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="6"><CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding Resources.PointOfSaleDevices, Mode=TwoWay}" SemanticProperties.Description="{loc:Text Key=S227DCCDD1E4F}" /><Label Text="{loc:Text Key=S227DCCDD1E4F}" VerticalOptions="Center" /></HorizontalStackLayout>
                 </VerticalStackLayout>
                 <VerticalStackLayout IsVisible="{Binding ShowRemoteApp}" Spacing="6">
                     <Label Text="RemoteApp" Style="{StaticResource SectionTitle}" SemanticProperties.HeadingLevel="Level1" />
                     <HorizontalStackLayout Spacing="6">
                         <CheckBox CheckedChanged="OnEditorFieldChanged" IsChecked="{Binding RemoteAppEnabled, Mode=TwoWay}"
-                                  SemanticProperties.Description="Подключение RemoteApp" />
-                        <Label Text="Подключение RemoteApp" FontAttributes="Bold" VerticalOptions="Center" />
+                                  SemanticProperties.Description="{loc:Text Key=S8FEBAA96E5CC}" />
+                        <Label Text="{loc:Text Key=S8FEBAA96E5CC}" FontAttributes="Bold" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <VerticalStackLayout IsVisible="{Binding RemoteAppEnabled}" Spacing="6">
-                        <Label Text="Путь к приложению" Style="{StaticResource FieldTitle}" />
+                        <Label Text="{loc:Text Key=S604658AC06AF}" Style="{StaticResource FieldTitle}" />
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
                             <Image WidthRequest="24" HeightRequest="24" VerticalOptions="Center">
                                 <Image.Triggers>
@@ -231,25 +232,25 @@
                                 </Image.Triggers>
                             </Image>
                             <Entry Grid.Column="1" x:Name="RemoteAppPathEntry" TextChanged="OnEditorFieldChanged"
-                                   Text="{Binding RemoteAppProgram}" Placeholder="Путь к .exe или ||Имя" SemanticProperties.Description="Путь к приложению" />
+                                   Text="{Binding RemoteAppProgram}" Placeholder="{loc:Text Key=SA29DEF2578B9}" SemanticProperties.Description="{loc:Text Key=S604658AC06AF}" />
                             <ImageButton Grid.Column="2" Style="{StaticResource PathButton}" IsVisible="{Binding HasPublishedRemoteApps}"
                                          Source="{AppThemeBinding Light={winui:InterfaceImage Name=remote_app_dropdown_light}, Dark={winui:InterfaceImage Name=remote_app_dropdown_dark}}"
-                                         Clicked="OnShowPublishedAppsClicked" ToolTipProperties.Text="Выбрать приложение из списка"
-                                         SemanticProperties.Description="Выбрать приложение из списка" />
+                                         Clicked="OnShowPublishedAppsClicked" ToolTipProperties.Text="{loc:Text Key=S11AB48629A90}"
+                                         SemanticProperties.Description="{loc:Text Key=S11AB48629A90}" />
                             <ImageButton Grid.Column="3" Style="{StaticResource PathButton}" Command="{Binding LoadPublishedRemoteAppsCommand}"
                                          Source="{AppThemeBinding Light={winui:InterfaceImage Name=remote_app_refresh_light}, Dark={winui:InterfaceImage Name=remote_app_refresh_dark}}"
-                                         ToolTipProperties.Text="Получить опубликованные приложения"
-                                         SemanticProperties.Description="Получить опубликованные приложения" />
+                                         ToolTipProperties.Text="{loc:Text Key=S7CF214FC9B42}"
+                                         SemanticProperties.Description="{loc:Text Key=S7CF214FC9B42}" />
                         </Grid>
                         <Label Text="{Binding RemoteAppFeedStatus}">
                             <Label.Triggers><DataTrigger TargetType="Label" Binding="{Binding RemoteAppFeedStatus}" Value="">
                                 <Setter Property="IsVisible" Value="False" />
                             </DataTrigger></Label.Triggers>
                         </Label>
-                        <Label Text="Аргументы командной строки" Style="{StaticResource FieldTitle}" />
-                        <Entry TextChanged="OnEditorFieldChanged" Text="{Binding RemoteApp.Arguments}" SemanticProperties.Description="Аргументы командной строки" />
-                        <Label Text="Рабочая папка на сервере" Style="{StaticResource FieldTitle}" />
-                        <Entry TextChanged="OnEditorFieldChanged" Text="{Binding RemoteApp.WorkingDirectory}" SemanticProperties.Description="Рабочая папка на сервере" />
+                        <Label Text="{loc:Text Key=S9DBB751FD8D6}" Style="{StaticResource FieldTitle}" />
+                        <Entry TextChanged="OnEditorFieldChanged" Text="{Binding RemoteApp.Arguments}" SemanticProperties.Description="{loc:Text Key=S9DBB751FD8D6}" />
+                        <Label Text="{loc:Text Key=SD6265ED31ABE}" Style="{StaticResource FieldTitle}" />
+                        <Entry TextChanged="OnEditorFieldChanged" Text="{Binding RemoteApp.WorkingDirectory}" SemanticProperties.Description="{loc:Text Key=SD6265ED31ABE}" />
                     </VerticalStackLayout>
                     <BoxView HeightRequest="1" Margin="0,8,0,0" Color="{AppThemeBinding Light=#CFDDF1, Dark=#35455E}" />
                     <HorizontalStackLayout Spacing="6">
@@ -257,34 +258,34 @@
                         <Label Text="RD Web" FontAttributes="Bold" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <VerticalStackLayout IsVisible="{Binding RemoteAppUseRdWeb}" Spacing="6">
-                        <Label Text="Адрес ленты RD Web" Style="{StaticResource FieldTitle}" />
+                        <Label Text="{loc:Text Key=SE11CBDF5A755}" Style="{StaticResource FieldTitle}" />
                         <Entry TextChanged="OnEditorFieldChanged" Text="{Binding RemoteAppFeedAddress}" Placeholder="https://server.example.com/RDWeb/Feed/webfeed.aspx"
-                               SemanticProperties.Description="Адрес ленты RD Web" />
-                        <Label Text="Если адрес не указан, используется сервер из раздела «Общие»." FontSize="12"
+                               SemanticProperties.Description="{loc:Text Key=SE11CBDF5A755}" />
+                        <Label Text="{loc:Text Key=S2924C891B437}" FontSize="12"
                                TextColor="{AppThemeBinding Light=#344763, Dark=#AAC2E2}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
                 <VerticalStackLayout IsVisible="{Binding ShowGateway}" Spacing="6">
-                    <Label Text="Шлюз RD" Style="{StaticResource SectionTitle}" SemanticProperties.HeadingLevel="Level1" />
-                    <Label Text="Использование шлюза" Style="{StaticResource FieldTitle}" />
+                    <Label Text="{loc:Text Key=S4ACD15403415}" Style="{StaticResource SectionTitle}" SemanticProperties.HeadingLevel="Level1" />
+                    <Label Text="{loc:Text Key=S3E47013888B4}" Style="{StaticResource FieldTitle}" />
                     <Picker ItemsSource="{Binding GatewayUsageMethods}" SelectedIndex="{Binding GatewayUsageMethod, Mode=TwoWay}"
-                            SemanticProperties.Description="Использование шлюза" />
+                            SemanticProperties.Description="{loc:Text Key=S3E47013888B4}" />
                     <VerticalStackLayout IsVisible="{Binding ShowGatewayFields}" Spacing="6">
                         <HorizontalStackLayout Spacing="6">
                             <CheckBox IsChecked="{Binding GatewayUseExplicitProfile, Mode=TwoWay}"
-                                      SemanticProperties.Description="Использовать параметры шлюза из карточки" />
-                            <Label Text="Использовать параметры шлюза из карточки" VerticalOptions="Center" />
+                                      SemanticProperties.Description="{loc:Text Key=SDB6E47698893}" />
+                            <Label Text="{loc:Text Key=SDB6E47698893}" VerticalOptions="Center" />
                         </HorizontalStackLayout>
-                        <Label Text="Адрес шлюза" Style="{StaticResource FieldTitle}" />
+                        <Label Text="{loc:Text Key=SA2B2970ADA54}" Style="{StaticResource FieldTitle}" />
                         <Entry Text="{Binding GatewayHostName, Mode=TwoWay}" Placeholder="rdgateway.example.com"
-                               SemanticProperties.Description="Адрес шлюза" />
-                        <Label Text="Способ входа на шлюз" Style="{StaticResource FieldTitle}" />
+                               SemanticProperties.Description="{loc:Text Key=SA2B2970ADA54}" />
+                        <Label Text="{loc:Text Key=S6676352F6D43}" Style="{StaticResource FieldTitle}" />
                         <Picker ItemsSource="{Binding GatewayCredentialSources}" SelectedIndex="{Binding GatewayCredentialSource, Mode=TwoWay}"
-                                SemanticProperties.Description="Способ входа на шлюз" />
+                                SemanticProperties.Description="{loc:Text Key=S6676352F6D43}" />
                         <HorizontalStackLayout Spacing="6">
                             <CheckBox IsChecked="{Binding GatewayShareCredentials, Mode=TwoWay}"
-                                      SemanticProperties.Description="Одна учётная запись для шлюза и сервера" />
-                            <Label Text="Одна учётная запись для шлюза и сервера" VerticalOptions="Center" />
+                                      SemanticProperties.Description="{loc:Text Key=SC782363BB96D}" />
+                            <Label Text="{loc:Text Key=SC782363BB96D}" VerticalOptions="Center" />
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </VerticalStackLayout>
@@ -300,7 +301,7 @@
                             </DataTrigger></Label.Triggers>
                         </Label>
                         <HorizontalStackLayout Grid.Column="1" Spacing="8" HorizontalOptions="End">
-                            <Button Text="Сохранить" Clicked="OnSaveClicked" IsEnabled="{Binding CanSaveProfile}"
+                            <Button Text="{loc:Text Key=SB4D30CAE5289}" Clicked="OnSaveClicked" IsEnabled="{Binding CanSaveProfile}"
                                     BackgroundColor="{AppThemeBinding Light=#2459A0, Dark=#376AAD}" TextColor="White" />
                             <Button Text="OK" Clicked="OnCloseClicked"
                                     BackgroundColor="{AppThemeBinding Light=#DFE9F7, Dark=#263750}"

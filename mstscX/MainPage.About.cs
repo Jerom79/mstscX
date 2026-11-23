@@ -39,17 +39,17 @@ public partial class MainPage
                 });
             }
             AddText("mstscX", 24);
-            AddText($"Версия: {typeof(App).Assembly.GetName().Version}", 14);
-            AddText("Автор: Jeronimo", 14);
-            AddText("Сделано с помощью Codex", 14);
+            AddText(global::mstscX.Services.L.F("Версия: {0}", typeof(App).Assembly.GetName().Version), 14);
+            AddText(global::mstscX.Services.L.T("Автор: Jeronimo"), 14);
+            AddText(global::mstscX.Services.L.T("Сделано с помощью Codex"), 14);
             var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
             {
                 XamlRoot = root.XamlRoot,
                 RequestedTheme = Application.Current?.RequestedTheme == AppTheme.Dark
                     ? Microsoft.UI.Xaml.ElementTheme.Dark : Microsoft.UI.Xaml.ElementTheme.Light,
-                Title = "О программе",
+                Title = global::mstscX.Services.L.T("О программе"),
                 Content = content,
-                CloseButtonText = "ОК",
+                CloseButtonText = global::mstscX.Services.L.T("ОК"),
                 DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Close
             };
             await dialog.ShowAsync();

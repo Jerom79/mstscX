@@ -149,9 +149,9 @@ public partial class ProfileEditorPage : ContentPage
                 var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
                 {
                     XamlRoot = root,
-                    Title = "Сохранить изменения?",
-                    PrimaryButtonText = "Да",
-                    SecondaryButtonText = "Нет",
+                    Title = global::mstscX.Services.L.T("Сохранить изменения?"),
+                    PrimaryButtonText = global::mstscX.Services.L.T("Да"),
+                    SecondaryButtonText = global::mstscX.Services.L.T("Нет"),
                     DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Primary
                 };
                 var choice = await dialog.ShowAsync();

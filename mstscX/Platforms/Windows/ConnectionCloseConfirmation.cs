@@ -40,13 +40,13 @@ internal static class ConnectionCloseConfirmation
             if (process == Environment.ProcessId) owner = active;
             var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             bool accepted = false;
-            dialog = new Microsoft.UI.Xaml.Window { Title = "Закрытие соединения" };
+            dialog = new Microsoft.UI.Xaml.Window { Title = global::mstscX.Services.L.T("Закрытие соединения") };
             var content = new Grid { Padding = new Thickness(24), RowSpacing = 20 };
             content.RowDefinitions.Add(new() { Height = new Microsoft.UI.Xaml.GridLength(1, Microsoft.UI.Xaml.GridUnitType.Star) });
             content.RowDefinitions.Add(new() { Height = Microsoft.UI.Xaml.GridLength.Auto });
             var text = new TextBlock
             {
-                Text = $"Отключиться от сервера «{serverName}»?",
+                Text = global::mstscX.Services.L.F("Отключиться от сервера «{0}»?", serverName),
                 FontSize = 18,
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = Microsoft.UI.Xaml.VerticalAlignment.Center
@@ -57,8 +57,8 @@ internal static class ConnectionCloseConfirmation
                 HorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment.Right,
                 Spacing = 8
             };
-            var disconnect = new Button { Content = "Отключить", MinWidth = 120 };
-            var cancel = new Button { Content = "Отмена", MinWidth = 100 };
+            var disconnect = new Button { Content = global::mstscX.Services.L.T("Отключить"), MinWidth = 120 };
+            var cancel = new Button { Content = global::mstscX.Services.L.T("Отмена"), MinWidth = 100 };
             if (Microsoft.UI.Xaml.Application.Current.Resources.TryGetValue("AccentButtonStyle", out var accentStyle) &&
                 accentStyle is Microsoft.UI.Xaml.Style style)
                 disconnect.Style = style;

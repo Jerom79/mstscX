@@ -11,13 +11,13 @@ public sealed class ServerProfileGroup(bool isRemoteApp, bool isExpanded, IEnume
     public double HeaderIconSize { get; private set; } = 38;
     public double HeaderFontSize { get; private set; } = 20;
     public string Title => GetTitle(IsRemoteApp);
-    internal static string GetTitle(bool isRemoteApp) => isRemoteApp ? "RemoteApp" : "Удалённые рабочие столы";
+    internal static string GetTitle(bool isRemoteApp) => isRemoteApp ? "RemoteApp" : global::mstscX.Services.L.T("Удалённые рабочие столы");
     public bool IsExpanded { get; private set; } = isExpanded;
     public int ProfileCount { get; } = profiles.Count();
     public ICommand ToggleCommand { get; } = toggleCommand;
     public string ToggleDescription => IsExpanded
-        ? $"Свернуть группу «{Title}»"
-        : $"Развернуть группу «{Title}» ({ProfileCount})";
+        ? global::mstscX.Services.L.F("Свернуть группу «{0}»", Title)
+        : global::mstscX.Services.L.F("Развернуть группу «{0}» ({1})", Title, ProfileCount);
 
     internal void SetHeaderStyle(double iconSize, double fontSize)
     {

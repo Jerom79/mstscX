@@ -16,7 +16,7 @@ public partial class MainPage : ContentPage
     private const string NavigationCollapsedKey = "MainMenuCollapsed";
     private const string CatalogViewKey = "MainMenuCatalogView";
     private const string ServerCardDragFormat = "mstscX.ServerCard";
-    private const string PowerShellMenuText = "Открыть Windows PowerShell";
+    private static string PowerShellMenuText => global::mstscX.Services.L.T("Открыть Windows PowerShell");
     private readonly MainViewModel viewModel;
     private NativeElement? importHost;
     private bool rdpFileOperationInProgress;
@@ -148,7 +148,7 @@ public partial class MainPage : ContentPage
                 .Where(file => file.FileType.Equals(".rdp", StringComparison.OrdinalIgnoreCase)).Take(2).ToArray();
             if (files.Length != 1)
             {
-                viewModel.ReportFileStatus("Перетащите один файл .rdp.");
+                viewModel.ReportFileStatus(global::mstscX.Services.L.T("Перетащите один файл .rdp."));
                 return;
             }
 
@@ -162,7 +162,7 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
         {
-            viewModel.ReportFileStatus("Не удалось прочитать файл RDP.");
+            viewModel.ReportFileStatus(global::mstscX.Services.L.T("Не удалось прочитать файл RDP."));
         }
         finally
         {
@@ -215,7 +215,7 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
         {
-            viewModel.ReportFileStatus("Не удалось открыть файл RDP.");
+            viewModel.ReportFileStatus(global::mstscX.Services.L.T("Не удалось открыть файл RDP."));
         }
         finally
         {
@@ -236,18 +236,18 @@ public partial class MainPage : ContentPage
             string name = string.Join("_", profile.Name.Split(Path.GetInvalidFileNameChars())).Trim(' ', '.');
             var picker = new FileSavePicker(window.AppWindow.Id)
             {
-                SuggestedFileName = name.Length == 0 ? "Подключение" : name,
-                FileTypeChoices = { { "Подключение к удалённому рабочему столу", new List<string> { ".rdp" } } },
+                SuggestedFileName = name.Length == 0 ? global::mstscX.Services.L.T("Подключение") : name,
+                FileTypeChoices = { { global::mstscX.Services.L.T("Подключение к удалённому рабочему столу"), new List<string> { ".rdp" } } },
                 DefaultFileExtension = ".rdp"
             };
             if (await picker.PickSaveFileAsync() is not { } file)
                 return;
 
             if (!Path.GetExtension(file.Path).Equals(".rdp", StringComparison.OrdinalIgnoreCase))
-                throw new FormatException("Укажите имя файла с расширением .rdp.");
+                throw new FormatException(global::mstscX.Services.L.T("Укажите имя файла с расширением .rdp."));
 
             await Services.RdpFileExport.WriteAsync(file.Path, contents);
-            viewModel.ReportFileStatus($"Файл «{Path.GetFileName(file.Path)}» сохранён.");
+            viewModel.ReportFileStatus(global::mstscX.Services.L.F("Файл «{0}» сохранён.", Path.GetFileName(file.Path)));
         }
         catch (FormatException ex)
         {
@@ -255,7 +255,7 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException or ArgumentException)
         {
-            viewModel.ReportFileStatus("Не удалось сохранить файл RDP.");
+            viewModel.ReportFileStatus(global::mstscX.Services.L.T("Не удалось сохранить файл RDP."));
         }
         finally
         {
@@ -271,6 +271,7 @@ public partial class MainPage : ContentPage
     public MainPage(MainViewModel viewModel)
     {
         InitializeComponent();
+        InitializeLanguagePicker();
         this.viewModel = viewModel;
         BindingContext = viewModel;
         InitializeNavigationAutoHide();
@@ -338,7 +339,7 @@ public partial class MainPage : ContentPage
 
         ActivateSessionWindow(Window);
         if (id.HasValue)
-            viewModel.ReportFileStatus("Этот профиль больше не существует.");
+            viewModel.ReportFileStatus(global::mstscX.Services.L.T("Этот профиль больше не существует."));
     }
 
     private enum CatalogView { List, SmallCards, LargeCards }
@@ -575,8 +576,8 @@ public partial class MainPage : ContentPage
 
             args.AcceptedOperation = NativeDragOperation.Move;
             args.DragUIOverride.Caption = InsertAfterCard(element, args)
-                ? $"После «{target.Name}»"
-                : $"Перед «{target.Name}»";
+                ? global::mstscX.Services.L.F("После «{0}»", target.Name)
+                : global::mstscX.Services.L.F("Перед «{0}»", target.Name);
         };
         element.Drop += (_, args) =>
         {
@@ -608,16 +609,16 @@ public partial class MainPage : ContentPage
             ExecuteCardCommand(card, viewModel.ConnectProfileCommand);
         };
         var menu = CreateCatalogMenu();
-        menu.Items.Insert(0, CreateMenuItem("Подключиться", MenuSymbol.Remote, () =>
+        menu.Items.Insert(0, CreateMenuItem(global::mstscX.Services.L.T("Подключиться"), MenuSymbol.Remote, () =>
             ExecuteCardCommand(card, viewModel.ConnectProfileCommand)));
-        menu.Items.Insert(1, CreateMenuItem("Редактировать", MenuSymbol.Edit, () =>
+        menu.Items.Insert(1, CreateMenuItem(global::mstscX.Services.L.T("Редактировать"), MenuSymbol.Edit, () =>
             ExecuteCardCommand(card, viewModel.EditProfileCommand)));
-        menu.Items.Insert(2, CreateMenuItem("Переименовать", MenuSymbol.Rename, () =>
+        menu.Items.Insert(2, CreateMenuItem(global::mstscX.Services.L.T("Переименовать"), MenuSymbol.Rename, () =>
         {
             if (card.BindingContext is ServerProfile profile)
                 element.DispatcherQueue.TryEnqueue(() => viewModel.BeginInlineRename(profile));
         }));
-        menu.Items.Insert(3, CreateMenuItem("Удалить", MenuSymbol.Delete, async () =>
+        menu.Items.Insert(3, CreateMenuItem(global::mstscX.Services.L.T("Удалить"), MenuSymbol.Delete, async () =>
         {
             if (card.BindingContext is ServerProfile profile)
                 await ConfirmDeleteProfileAsync(profile);
@@ -659,8 +660,8 @@ public partial class MainPage : ContentPage
             return;
         }
 
-        string login = string.IsNullOrWhiteSpace(profile.UserName) ? "не указан" : profile.UserName;
-        ToolTipProperties.SetText(card, $"{profile.Name}\nАдрес: {RdpEndpoint.FormatForDisplay(profile.Address)}\nЛогин: {login}");
+        string login = string.IsNullOrWhiteSpace(profile.UserName) ? global::mstscX.Services.L.T("не указан") : profile.UserName;
+        ToolTipProperties.SetText(card, global::mstscX.Services.L.F("{0}\nАдрес: {1}\nЛогин: {2}", profile.Name, RdpEndpoint.FormatForDisplay(profile.Address), login));
     }
 
     private bool InsertAfterCard(NativeElement card, Microsoft.UI.Xaml.DragEventArgs args)
@@ -707,14 +708,14 @@ public partial class MainPage : ContentPage
     private Microsoft.UI.Xaml.Controls.MenuFlyout CreateCatalogMenu()
     {
         var menu = new Microsoft.UI.Xaml.Controls.MenuFlyout();
-        menu.Items.Add(CreateMenuItem("Добавить сервер", MenuSymbol.Add, () =>
+        menu.Items.Add(CreateMenuItem(global::mstscX.Services.L.T("Добавить сервер"), MenuSymbol.Add, () =>
         {
             if (viewModel.NewProfileCommand.CanExecute(null))
                 viewModel.NewProfileCommand.Execute(null);
         }));
         var viewMenu = new Microsoft.UI.Xaml.Controls.MenuFlyoutSubItem
         {
-            Text = "Вид",
+            Text = global::mstscX.Services.L.T("Вид"),
             Icon = new SymbolIcon(MenuSymbol.View)
         };
         AddCatalogViewItems(viewMenu.Items);
@@ -724,25 +725,25 @@ public partial class MainPage : ContentPage
 
     private (Microsoft.UI.Xaml.Controls.MenuBarItem[] Items, Action Dispose) CreateMainMenus(bool fullScreen)
     {
-        var fileMenu = new Microsoft.UI.Xaml.Controls.MenuBarItem { Title = "Файл" };
+        var fileMenu = new Microsoft.UI.Xaml.Controls.MenuBarItem { Title = global::mstscX.Services.L.T("Файл") };
         var open = new Microsoft.UI.Xaml.Controls.MenuFlyoutItem
         {
-            Text = "Открыть RDP соединение…",
+            Text = global::mstscX.Services.L.T("Открыть RDP соединение…"),
             Icon = new Microsoft.UI.Xaml.Controls.FontIcon { Glyph = "\uE838" } // FolderOpen
         };
         open.Click += async (_, _) => await PickRdpFileAsync();
         fileMenu.Items.Add(open);
-        var saveAs = CreateMenuItem("Сохранить RDP соединение…", MenuSymbol.Save, async () => await SaveRdpFileAsAsync());
+        var saveAs = CreateMenuItem(global::mstscX.Services.L.T("Сохранить RDP соединение…"), MenuSymbol.Save, async () => await SaveRdpFileAsAsync());
         fileMenu.Items.Add(saveAs);
-        fileMenu.Items.Add(CreateMenuItem("Открыть список…", MenuSymbol.OpenFile, async () => await PickServerListAsync()));
-        fileMenu.Items.Add(CreateMenuItem("Сохранить список…", MenuSymbol.Save, async () => await SaveServerListAsync()));
+        fileMenu.Items.Add(CreateMenuItem(global::mstscX.Services.L.T("Открыть список…"), MenuSymbol.OpenFile, async () => await PickServerListAsync()));
+        fileMenu.Items.Add(CreateMenuItem(global::mstscX.Services.L.T("Сохранить список…"), MenuSymbol.Save, async () => await SaveServerListAsync()));
         fileMenu.Items.Add(new Microsoft.UI.Xaml.Controls.MenuFlyoutSeparator());
-        fileMenu.Items.Add(CreateMenuItem("Закрыть", MenuSymbol.Cancel, RequestMainWindowClose));
+        fileMenu.Items.Add(CreateMenuItem(global::mstscX.Services.L.T("Закрыть"), MenuSymbol.Cancel, RequestMainWindowClose));
 
-        var viewMenu = new Microsoft.UI.Xaml.Controls.MenuBarItem { Title = "Вид" };
+        var viewMenu = new Microsoft.UI.Xaml.Controls.MenuBarItem { Title = global::mstscX.Services.L.T("Вид") };
         var fullScreenItem = new Microsoft.UI.Xaml.Controls.MenuFlyoutItem
         {
-            Text = fullScreen ? "Выйти из полноэкранного режима" : "Полноэкранный режим",
+            Text = fullScreen ? global::mstscX.Services.L.T("Выйти из полноэкранного режима") : global::mstscX.Services.L.T("Полноэкранный режим"),
             Icon = new Microsoft.UI.Xaml.Controls.FontIcon { Glyph = "\uE740" },
             KeyboardAcceleratorTextOverride = "F11"
         };
@@ -753,14 +754,14 @@ public partial class MainPage : ContentPage
         viewMenu.Items.Add(new Microsoft.UI.Xaml.Controls.MenuFlyoutSeparator());
         var themeMenu = new Microsoft.UI.Xaml.Controls.MenuFlyoutSubItem
         {
-            Text = "Тема приложения",
+            Text = global::mstscX.Services.L.T("Тема приложения"),
             Icon = new SymbolIcon(MenuSymbol.Setting)
         };
         (string Name, Microsoft.UI.Xaml.Controls.IconElement Icon)[] themes =
         [
-            ("Системная", new SymbolIcon(MenuSymbol.Remote)),
-            ("Светлая", new Microsoft.UI.Xaml.Controls.FontIcon { Glyph = "\uE706" }), // Brightness
-            ("Тёмная", new Microsoft.UI.Xaml.Controls.FontIcon { Glyph = "\uE708" }) // QuietHours
+            (global::mstscX.Services.L.T("Системная"), new SymbolIcon(MenuSymbol.Remote)),
+            (global::mstscX.Services.L.T("Светлая"), new Microsoft.UI.Xaml.Controls.FontIcon { Glyph = "\uE706" }), // Brightness
+            (global::mstscX.Services.L.T("Тёмная"), new Microsoft.UI.Xaml.Controls.FontIcon { Glyph = "\uE708" }) // QuietHours
         ];
         int selectedTheme = Services.ThemeSettings.SelectedIndex;
         var themeMenuItems = new Microsoft.UI.Xaml.Controls.RadioMenuFlyoutItem[themes.Length];
@@ -781,27 +782,27 @@ public partial class MainPage : ContentPage
         }
         viewMenu.Items.Add(themeMenu);
 
-        var editMenu = new Microsoft.UI.Xaml.Controls.MenuBarItem { Title = "Правка" };
+        var editMenu = new Microsoft.UI.Xaml.Controls.MenuBarItem { Title = global::mstscX.Services.L.T("Правка") };
         editMenu.Items.Add(new Microsoft.UI.Xaml.Controls.MenuFlyoutItem
         {
-            Text = "Добавить",
+            Text = global::mstscX.Services.L.T("Добавить"),
             Icon = new SymbolIcon(MenuSymbol.Add),
             Command = viewModel.NewProfileCommand
         });
         var separator = new Microsoft.UI.Xaml.Controls.MenuFlyoutSeparator();
         var connect = new Microsoft.UI.Xaml.Controls.MenuFlyoutItem
         {
-            Text = "Подключиться",
+            Text = global::mstscX.Services.L.T("Подключиться"),
             Icon = new SymbolIcon(MenuSymbol.Remote),
             Command = viewModel.ConnectProfileCommand
         };
         var edit = new Microsoft.UI.Xaml.Controls.MenuFlyoutItem
         {
-            Text = "Редактировать",
+            Text = global::mstscX.Services.L.T("Редактировать"),
             Icon = new SymbolIcon(MenuSymbol.Edit),
             Command = viewModel.EditProfileCommand
         };
-        var delete = CreateMenuItem("Удалить", MenuSymbol.Delete, async () =>
+        var delete = CreateMenuItem(global::mstscX.Services.L.T("Удалить"), MenuSymbol.Delete, async () =>
         {
             if (viewModel.SelectedProfile is { } selected)
                 await ConfirmDeleteProfileAsync(selected);
@@ -838,8 +839,8 @@ public partial class MainPage : ContentPage
         };
         viewModel.PropertyChanged += updateMenu;
         UpdateEditMenu();
-        var helpMenu = new Microsoft.UI.Xaml.Controls.MenuBarItem { Title = "Справка" };
-        helpMenu.Items.Add(CreateMenuItem("О программе", MenuSymbol.Help, async () => await ShowAboutAsync()));
+        var helpMenu = new Microsoft.UI.Xaml.Controls.MenuBarItem { Title = global::mstscX.Services.L.T("Справка") };
+        helpMenu.Items.Add(CreateMenuItem(global::mstscX.Services.L.T("О программе"), MenuSymbol.Help, async () => await ShowAboutAsync()));
         return ([fileMenu, viewMenu, editMenu, helpMenu], () =>
         {
             viewModel.PropertyChanged -= updateMenu;
@@ -886,7 +887,7 @@ public partial class MainPage : ContentPage
     private async Task ConfirmDeleteProfileAsync(ServerProfile profile)
     {
         if (viewModel.CanDelete(profile) &&
-            await DisplayAlertAsync("Удалить сервер?", $"Удалить профиль «{profile.Name}»?", "Удалить", "Отмена"))
+            await DisplayAlertAsync(global::mstscX.Services.L.T("Удалить сервер?"), global::mstscX.Services.L.F("Удалить профиль «{0}»?", profile.Name), global::mstscX.Services.L.T("Удалить"), global::mstscX.Services.L.T("Отмена")))
         {
             viewModel.DeleteProfile(profile);
             if (!viewModel.Profiles.Contains(profile))
@@ -896,9 +897,9 @@ public partial class MainPage : ContentPage
 
     private void AddCatalogViewItems(IList<Microsoft.UI.Xaml.Controls.MenuFlyoutItemBase> items)
     {
-        items.Add(CreateMenuItem("Список", MenuSymbol.List, () => SelectCatalogView(CatalogView.List)));
-        items.Add(CreateMenuItem("Мелкие карточки", MenuSymbol.AllApps, () => SelectCatalogView(CatalogView.SmallCards)));
-        items.Add(CreateMenuItem("Крупные карточки", MenuSymbol.ViewAll, () => SelectCatalogView(CatalogView.LargeCards)));
+        items.Add(CreateMenuItem(global::mstscX.Services.L.T("Список"), MenuSymbol.List, () => SelectCatalogView(CatalogView.List)));
+        items.Add(CreateMenuItem(global::mstscX.Services.L.T("Мелкие карточки"), MenuSymbol.AllApps, () => SelectCatalogView(CatalogView.SmallCards)));
+        items.Add(CreateMenuItem(global::mstscX.Services.L.T("Крупные карточки"), MenuSymbol.ViewAll, () => SelectCatalogView(CatalogView.LargeCards)));
     }
 
     private void SelectCatalogView(CatalogView view)
@@ -941,12 +942,12 @@ public partial class MainPage : ContentPage
                 string? untrustedHost = Services.WindowsPowerShell.GetUntrustedHost(profile);
                 if (untrustedHost is not null)
                 {
-                    bool add = await DisplayAlertAsync("Подключение Windows PowerShell",
-                        $"Добавить сервер «{profile.Name}» ({untrustedHost}) в TrustedHosts этого компьютера?\n\n" +
-                        "Это разрешит подключение WinRM по HTTP с учётными данными сервера. " +
-                        "Добавляйте только серверы, которым доверяете. Существующий список будет сохранён. " +
-                        "Windows запросит права администратора; при необходимости будет запущена локальная служба WinRM.",
-                        "Добавить и подключиться", "Отмена");
+                    bool add = await DisplayAlertAsync(global::mstscX.Services.L.T("Подключение Windows PowerShell"),
+                        global::mstscX.Services.L.F("Добавить сервер «{0}» ({1}) в TrustedHosts этого компьютера?\n\n", profile.Name, untrustedHost) +
+                        global::mstscX.Services.L.T("Это разрешит подключение WinRM по HTTP с учётными данными сервера. ") +
+                        global::mstscX.Services.L.T("Добавляйте только серверы, которым доверяете. Существующий список будет сохранён. ") +
+                        global::mstscX.Services.L.T("Windows запросит права администратора; при необходимости будет запущена локальная служба WinRM."),
+                        global::mstscX.Services.L.T("Добавить и подключиться"), global::mstscX.Services.L.T("Отмена"));
                     if (!add || !await Services.WindowsPowerShell.AddTrustedHostAsync(untrustedHost))
                         return;
                 }
@@ -962,7 +963,7 @@ public partial class MainPage : ContentPage
         catch (Exception ex) when (ex is FormatException or System.ComponentModel.Win32Exception or
             InvalidOperationException or IOException or UnauthorizedAccessException)
         {
-            await DisplayAlertAsync("Windows PowerShell", ex.Message, "ОК");
+            await DisplayAlertAsync("Windows PowerShell", ex.Message, global::mstscX.Services.L.T("ОК"));
         }
         finally { openingPowerShell = false; }
     }
@@ -1095,8 +1096,8 @@ public partial class MainPage : ContentPage
             {
                 int sessionCount = OpenSessionCount;
                 visibleEmbeddedSession?.SetEmbeddedVisible(false);
-                if (sessionCount > 0 && !await DisplayAlertAsync("Закрыть приложение?", $"Открытых сеансов: {sessionCount}. При закрытии они будут отключены.",
-                    "Отключить и закрыть", "Отмена"))
+                if (sessionCount > 0 && !await DisplayAlertAsync(global::mstscX.Services.L.T("Закрыть приложение?"), global::mstscX.Services.L.F("Открытых сеансов: {0}. При закрытии они будут отключены.", sessionCount),
+                    global::mstscX.Services.L.T("Отключить и закрыть"), global::mstscX.Services.L.T("Отмена")))
                     return;
 
                 mainWindowCloseApproved = true;
@@ -1159,18 +1160,18 @@ public partial class MainPage : ContentPage
         DisconnectedSessionActions.IsVisible = SessionNotice.IsVisible &&
             selected.HasValue && !showExternal && remoteApp is null;
         ActivateExternalSession.IsVisible = showExternal || remoteApp?.IsRemoteAppStarted == true;
-        ActivateExternalSession.Text = remoteApp is null ? "Перейти к подключению" : "Перейти к приложению";
+        ActivateExternalSession.Text = remoteApp is null ? global::mstscX.Services.L.T("Перейти к подключению") : global::mstscX.Services.L.T("Перейти к приложению");
         DisconnectRemoteApp.IsVisible = remoteApp is not null;
         SessionMessage.Text = reconnectStatus ?? (remoteApp is not null
-            ? remoteApp.IsRemoteAppStarted ? "Удалённое приложение запущено." : "Запуск удалённого приложения…" :
-            showExternal ? isActive ? "Подключение открыто в отдельном окне." : "Подключение в отдельном окне…" :
-            selected is null ? "Выберите сервер." :
-            connectionError?.Message ?? "Нет подключения.");
+            ? remoteApp.IsRemoteAppStarted ? global::mstscX.Services.L.T("Удалённое приложение запущено.") : global::mstscX.Services.L.T("Запуск удалённого приложения…") :
+            showExternal ? isActive ? global::mstscX.Services.L.T("Подключение открыто в отдельном окне.") : global::mstscX.Services.L.T("Подключение в отдельном окне…") :
+            selected is null ? global::mstscX.Services.L.T("Выберите сервер.") :
+            connectionError?.Message ?? global::mstscX.Services.L.T("Нет подключения."));
         string? address = connectionError?.Address;
         if (showExternal || remoteApp is not null)
             address = isActive && reconnectStatus is null ? null : viewModel.SelectedProfile?.Address;
         SessionNoticeEndpoint.IsVisible = address is not null;
-        SessionNoticeEndpoint.Text = address is null ? null : $"Адрес: {RdpEndpoint.FormatForDisplay(address)}";
+        SessionNoticeEndpoint.Text = address is null ? null : global::mstscX.Services.L.F("Адрес: {0}", RdpEndpoint.FormatForDisplay(address));
         UpdateServerPanelWidth();
 
         if (nextSession is not null)
@@ -1242,7 +1243,7 @@ public partial class MainPage : ContentPage
         if (remoteAppSessions.TryGetValue(profileId, out var remoteApp))
         {
             if (remoteApp.IsRemoteAppStarted && !remoteApp.TryActivateRemoteAppWindow(remoteAppSessions.Count == 1))
-                SessionMessage.Text = "Окно RemoteApp пока недоступно. Проверьте, открыто ли приложение.";
+                SessionMessage.Text = global::mstscX.Services.L.T("Окно RemoteApp пока недоступно. Проверьте, открыто ли приложение.");
             return true;
         }
 
@@ -1264,7 +1265,7 @@ public partial class MainPage : ContentPage
         if (Window?.Handler?.PlatformView is not Microsoft.UI.Xaml.Window nativeWindow ||
             !nativeWindow.DispatcherQueue.TryEnqueue(() => OpenSession(address, profile, password)))
         {
-            ShowConnectionError(profile, "Не удалось открыть окно подключения.");
+            ShowConnectionError(profile, global::mstscX.Services.L.T("Не удалось открыть окно подключения."));
         }
     }
 
@@ -1358,7 +1359,7 @@ public partial class MainPage : ContentPage
             DllNotFoundException or EntryPointNotFoundException)
         {
             window?.CloseConnection();
-            ShowConnectionError(profile, $"Не удалось открыть окно Win32 (0x{ex.HResult:X8}). {ex.Message}");
+            ShowConnectionError(profile, global::mstscX.Services.L.F("Не удалось открыть окно Win32 (0x{0:X8}). {1}", ex.HResult, ex.Message));
         }
     }
 
@@ -1416,7 +1417,7 @@ public partial class MainPage : ContentPage
         {
             remoteAppSessions.Remove(profile.Id);
             session?.Dispose();
-            ShowConnectionError(profile, $"Не удалось запустить RemoteApp (0x{ex.HResult:X8}). {ex.Message}");
+            ShowConnectionError(profile, global::mstscX.Services.L.F("Не удалось запустить RemoteApp (0x{0:X8}). {1}", ex.HResult, ex.Message));
         }
     }
 

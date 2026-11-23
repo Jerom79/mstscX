@@ -19,7 +19,7 @@ internal sealed class TitleNavigationButton(Action clicked, Func<bool> collapsed
         };
         void UpdateHint()
         {
-            string hint = collapsed() ? "Развернуть боковое меню" : "Свернуть боковое меню";
+            string hint = collapsed() ? global::mstscX.Services.L.T("Развернуть боковое меню") : global::mstscX.Services.L.T("Свернуть боковое меню");
             Microsoft.UI.Xaml.Controls.ToolTipService.SetToolTip(button, hint);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, hint);
         }
@@ -83,8 +83,8 @@ internal sealed class TitleFullScreenButtonHandler() : ViewHandler<TitleFullScre
             Width = 46, Height = 32,
             Content = new Microsoft.UI.Xaml.Controls.FontIcon { Glyph = "\uE740", FontSize = 16 }
         };
-        Microsoft.UI.Xaml.Controls.ToolTipService.SetToolTip(button, "Полноэкранный режим");
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, "Полноэкранный режим (F11)");
+        Microsoft.UI.Xaml.Controls.ToolTipService.SetToolTip(button, global::mstscX.Services.L.T("Полноэкранный режим"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, global::mstscX.Services.L.T("Полноэкранный режим (F11)"));
         button.Click += (_, _) => VirtualView.Clicked();
         return button;
     }

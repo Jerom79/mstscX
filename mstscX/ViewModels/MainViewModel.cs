@@ -77,8 +77,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException or COMException)
         {
-            Status = profiles.Count == 0 ? "Не удалось прочитать сохранённые профили." :
-                "Не удалось сохранить идентификаторы профилей.";
+            Status = profiles.Count == 0 ? global::mstscX.Services.L.T("Не удалось прочитать сохранённые профили.") :
+                global::mstscX.Services.L.T("Не удалось сохранить идентификаторы профилей.");
         }
 
         RefreshProfileGroups();
@@ -122,7 +122,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or COMException)
         {
-            Status = "Не удалось сохранить состояние группы.";
+            Status = global::mstscX.Services.L.T("Не удалось сохранить состояние группы.");
             return;
         }
 
@@ -163,7 +163,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or COMException)
         {
-            Status = "Не удалось сохранить порядок серверов.";
+            Status = global::mstscX.Services.L.T("Не удалось сохранить порядок серверов.");
             return false;
         }
 
@@ -205,7 +205,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         string name = value?.Trim() ?? "";
         if (name.Length == 0 || IsDuplicateProfileName(name, profile.Id))
         {
-            Status = name.Length == 0 ? "Укажите наименование сервера." : "Профиль с таким наименованием уже существует.";
+            Status = name.Length == 0 ? global::mstscX.Services.L.T("Укажите наименование сервера.") : global::mstscX.Services.L.T("Профиль с таким наименованием уже существует.");
             return false;
         }
 
@@ -224,7 +224,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or COMException)
         {
-            Status = "Не удалось переименовать профиль сервера.";
+            Status = global::mstscX.Services.L.T("Не удалось переименовать профиль сервера.");
             return false;
         }
 
@@ -234,7 +234,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         RefreshProfileGroups();
         SelectedProfile = ReferenceEquals(selection, profile) ? updated : selection;
         ProfileRenamed?.Invoke(updated);
-        Status = $"Профиль переименован в «{name}».";
+        Status = global::mstscX.Services.L.F("Профиль переименован в «{0}».", name);
         return true;
     }
 
@@ -253,7 +253,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or COMException)
         {
-            Status = "Не удалось удалить профиль сервера.";
+            Status = global::mstscX.Services.L.T("Не удалось удалить профиль сервера.");
             return;
         }
 
@@ -262,7 +262,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         profiles = remaining;
         RefreshProfileGroups();
         SelectedProfile = selection == profile ? null : selection;
-        Status = $"Профиль «{profile.Name}» удалён.";
+        Status = global::mstscX.Services.L.F("Профиль «{0}» удалён.", profile.Name);
     }
 
     public ServerProfile? SelectedProfile
@@ -400,9 +400,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         get
         {
-            string title = editingProfile is null ? "Новая" : editorStartedAsNew
-                ? $"Профиль сервера - {editingProfile.Name}"
-                : $"Профиль сервера: {editingProfile.Name}";
+            string title = editingProfile is null ? global::mstscX.Services.L.T("Новая") : editorStartedAsNew
+                ? global::mstscX.Services.L.F("Профиль сервера - {0}", editingProfile.Name)
+                : global::mstscX.Services.L.F("Профиль сервера: {0}", editingProfile.Name);
             return ProfileHasChanges ? $"{title} *" : title;
         }
     }
@@ -507,12 +507,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool ShowGatewayFields => gateway.UsesConfiguredGateway;
 
     public IReadOnlyList<string> GatewayUsageMethods { get; } =
-        ["Без шлюза", "Всегда через шлюз", "Через шлюз, если прямое подключение недоступно",
-         "Системные настройки", "Без шлюза (обход локальных адресов)"];
+        [global::mstscX.Services.L.T("Без шлюза"), global::mstscX.Services.L.T("Всегда через шлюз"), global::mstscX.Services.L.T("Через шлюз, если прямое подключение недоступно"),
+         global::mstscX.Services.L.T("Системные настройки"), global::mstscX.Services.L.T("Без шлюза (обход локальных адресов)")];
 
     public IReadOnlyList<string> GatewayCredentialSources { get; } =
-        ["Запросить пароль (NTLM)", "Смарт-карта", "Текущая учётная запись Windows",
-         "Запросить пароль (базовая проверка)", "Выбрать при подключении", "Веб-аутентификация (внешний клиент)"];
+        [global::mstscX.Services.L.T("Запросить пароль (NTLM)"), global::mstscX.Services.L.T("Смарт-карта"), global::mstscX.Services.L.T("Текущая учётная запись Windows"),
+         global::mstscX.Services.L.T("Запросить пароль (базовая проверка)"), global::mstscX.Services.L.T("Выбрать при подключении"), global::mstscX.Services.L.T("Веб-аутентификация (внешний клиент)")];
 
     public int GatewayUsageMethod
     {
@@ -717,7 +717,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
 
         if (login.Length == 0 || string.IsNullOrEmpty(password))
-            throw new FormatException("Для загрузки приложений укажите логин и пароль карточки в разделе «Общие».");
+            throw new FormatException(global::mstscX.Services.L.T("Для загрузки приложений укажите логин и пароль карточки в разделе «Общие»."));
 
         return CreateDiscoveryCredential(login, password);
     }
@@ -734,7 +734,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
 
         ResetPublishedRemoteApps();
-        RemoteAppFeedStatus = "Загрузка опубликованных приложений…";
+        RemoteAppFeedStatus = global::mstscX.Services.L.T("Загрузка опубликованных приложений…");
         SetBusy(true);
         try
         {
@@ -748,12 +748,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             loadedRemoteAppFeed = feed;
             PublishedRemoteApps = apps;
-            RemoteAppFeedStatus = apps.Count == 0 ? "Опубликованные приложения не найдены." : "Выберите приложение из списка.";
+            RemoteAppFeedStatus = apps.Count == 0 ? global::mstscX.Services.L.T("Опубликованные приложения не найдены.") : global::mstscX.Services.L.T("Выберите приложение из списка.");
         }
         catch (Exception ex) when (ex is FormatException or HttpRequestException or OperationCanceledException or XmlException or COMException or IOException or UnauthorizedAccessException or ArgumentException)
         {
             if (IsEditing)
-                RemoteAppFeedStatus = $"Не удалось загрузить приложения. {ex.Message}";
+                RemoteAppFeedStatus = global::mstscX.Services.L.F("Не удалось загрузить приложения. {0}", ex.Message);
         }
         finally
         {
@@ -766,7 +766,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (isBusy || !IsEditing || !PublishedRemoteApps.Contains(app))
             return;
 
-        RemoteAppFeedStatus = "Загрузка параметров приложения…";
+        RemoteAppFeedStatus = global::mstscX.Services.L.T("Загрузка параметров приложения…");
         SetBusy(true);
         try
         {
@@ -812,7 +812,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (IsEditing)
             {
                 SelectedPublishedRemoteApp = null;
-                RemoteAppFeedStatus = $"Не удалось загрузить параметры приложения. {ex.Message}";
+                RemoteAppFeedStatus = global::mstscX.Services.L.F("Не удалось загрузить параметры приложения. {0}", ex.Message);
             }
         }
         finally
@@ -843,7 +843,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(ProfileName))
             ProfileName = app.Name;
         RefreshProfileEditorTitle();
-        RemoteAppFeedStatus = HasProfileRemoteAppIcon ? $"Выбрано: {app.Name}" : $"Выбрано: {app.Name}. Сервер не предоставил доступную иконку.";
+        RemoteAppFeedStatus = HasProfileRemoteAppIcon ? global::mstscX.Services.L.F("Выбрано: {0}", app.Name) : global::mstscX.Services.L.F("Выбрано: {0}. Сервер не предоставил доступную иконку.", app.Name);
     }
 
     internal Task<string?> ReadSessionPasswordAsync(ServerProfile profile) => store.ReadPasswordAsync(profile);
@@ -858,7 +858,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         if (!RdpEndpoint.TryParse(profile.Address, out var endpoint))
         {
-            ConnectionFailed?.Invoke(profile, "Укажите корректный адрес сервера в профиле.");
+            ConnectionFailed?.Invoke(profile, global::mstscX.Services.L.T("Укажите корректный адрес сервера в профиле."));
             return;
         }
 
@@ -871,7 +871,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex) when (ex is FormatException or UnauthorizedAccessException or COMException or ArgumentException)
         {
             ConnectionFailed?.Invoke(profile,
-                $"Не удалось расшифровать пароль для «{profile.Name}». Замените или удалите его в профиле.");
+                global::mstscX.Services.L.F("Не удалось расшифровать пароль для «{0}». Замените или удалите его в профиле.", profile.Name));
             return;
         }
 
@@ -899,7 +899,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         if (isBusy || IsEditing)
         {
-            Status = "Завершите редактирование текущего профиля перед импортом.";
+            Status = global::mstscX.Services.L.T("Завершите редактирование текущего профиля перед импортом.");
             return false;
         }
 
@@ -971,27 +971,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (IsDuplicateProfileName(name, editingProfile?.Id))
         {
             EditorTab = 0;
-            ProfileNameError = "Профиль с таким наименованием уже существует.";
+            ProfileNameError = global::mstscX.Services.L.T("Профиль с таким наименованием уже существует.");
             return false;
         }
 
         if (name.Length == 0 || !RdpEndpoint.TryParse(host, out _))
         {
-            Status = "Укажите название и корректный адрес сервера.";
+            Status = global::mstscX.Services.L.T("Укажите название и корректный адрес сервера.");
             return false;
         }
 
         if (gateway.UsesConfiguredGateway && (gateway.UseExplicitProfile || gateway.HostName.Length > 0) && !gateway.HasValidHost)
         {
             EditorTab = 4;
-            Status = "Укажите корректный адрес шлюза RD.";
+            Status = global::mstscX.Services.L.T("Укажите корректный адрес шлюза RD.");
             return false;
         }
 
         if (RemoteApp.Enabled && string.IsNullOrWhiteSpace(RemoteApp.Program))
         {
             EditorTab = 3;
-            Status = "Укажите псевдоним или путь к опубликованному приложению RemoteApp.";
+            Status = global::mstscX.Services.L.T("Укажите псевдоним или путь к опубликованному приложению RemoteApp.");
             return false;
         }
 
@@ -1053,14 +1053,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new(nameof(HasSavedPassword)));
             editorSnapshot = CaptureEditorSnapshot();
             RefreshProfileEditorTitle();
-            Status = $"Профиль «{name}» сохранён.";
+            Status = global::mstscX.Services.L.F("Профиль «{0}» сохранён.", name);
             if (renamed)
                 ProfileRenamed?.Invoke(profile);
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or COMException)
         {
-            Status = "Не удалось сохранить профиль сервера.";
+            Status = global::mstscX.Services.L.T("Не удалось сохранить профиль сервера.");
             return false;
         }
         finally

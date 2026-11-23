@@ -38,7 +38,7 @@ internal static class RdpFileImport
             int.TryParse(Get(key), out int number) ? number : fallback;
 
         if (!RdpEndpoint.TryParse(Get("full address"), out var endpoint))
-            throw new FormatException("В файле RDP нет корректного адреса подключения.");
+            throw new FormatException(global::mstscX.Services.L.T("В файле RDP нет корректного адреса подключения."));
 
         int port = Number("server port");
         if (endpoint.Port == RdpEndpoint.DefaultPort && port is > 0 and <= 65535)

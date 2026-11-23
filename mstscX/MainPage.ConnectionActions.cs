@@ -14,8 +14,8 @@ public partial class MainPage
         {
             visibleEmbeddedSession?.SetEmbeddedVisible(false);
             if (WinUI.ConnectionCloseConfirmation.Enabled &&
-                !await DisplayAlertAsync("Закрыть все соединения?",
-                    $"Открытых сеансов: {OpenSessionCount}. Все они будут отключены.", "Отключить", "Отмена"))
+                !await DisplayAlertAsync(global::mstscX.Services.L.T("Закрыть все соединения?"),
+                    global::mstscX.Services.L.F("Открытых сеансов: {0}. Все они будут отключены.", OpenSessionCount), global::mstscX.Services.L.T("Отключить"), global::mstscX.Services.L.T("Отмена")))
                 return;
 
             foreach (var session in embeddedSessions.Values.ToArray()) session.EndSession();

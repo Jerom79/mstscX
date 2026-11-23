@@ -4,7 +4,7 @@ namespace mstscX.ViewModels;
 
 public sealed class SessionViewModel(string displayAddress) : INotifyPropertyChanged
 {
-    private string status = "Подключение…";
+    private string status = global::mstscX.Services.L.T("Подключение…");
     private string? reconnectStatus;
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -14,7 +14,7 @@ public sealed class SessionViewModel(string displayAddress) : INotifyPropertyCha
     public string Status => reconnectStatus ?? status;
     public bool IsReconnecting => reconnectStatus is not null;
 
-    internal void ReportConnected() => Update(true, $"Подключено к {displayAddress}");
+    internal void ReportConnected() => Update(true, global::mstscX.Services.L.F("Подключено к {0}", displayAddress));
 
     internal void ReportDisconnected(string message) => Update(false, message);
 

@@ -1,4 +1,4 @@
-#define MyAppName "mstscX"
+﻿#define MyAppName "mstscX"
 #define MyAppExeName "mstscX.exe"
 ; Preserve installer/Windows identities so this updates MSTSC_MAUI in place.
 #define MyAppUserModelID "MSTSC_MAUI.RdpClient"
@@ -34,8 +34,16 @@ WizardStyle=modern
 RestartApplications=no
 ChangesAssociations=yes
 
+LanguageDetectionMethod=uilanguage
+UsePreviousLanguage=no
+
 [Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
+
+[CustomMessages]
+english.ServerListDescription=mstscX server list
+russian.ServerListDescription=Список серверов mstscX
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -61,7 +69,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; AppUserMo
 [Registry]
 Root: HKA; Subkey: "Software\Classes\.rdpx"; ValueType: string; ValueName: ""; ValueData: "MSTSC_MAUI.ServerList"; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\.rdpx\OpenWithProgids"; ValueType: string; ValueName: "MSTSC_MAUI.ServerList"; ValueData: ""; Flags: uninsdeletevalue
-Root: HKA; Subkey: "Software\Classes\MSTSC_MAUI.ServerList"; ValueType: string; ValueName: ""; ValueData: "Список серверов mstscX"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\MSTSC_MAUI.ServerList"; ValueType: string; ValueName: ""; ValueData: "{cm:ServerListDescription}"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\MSTSC_MAUI.ServerList\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\appicon.ico"
 Root: HKA; Subkey: "Software\Classes\MSTSC_MAUI.ServerList\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 
@@ -74,6 +82,11 @@ var
   LegacyInstallDir, RenamedInstallDir: String;
   InstallFolderRenamed, InstallationCompleted: Boolean;
 
+function TextLang(RussianText, EnglishText: String): String;
+begin
+  if ActiveLanguage() = 'russian' then Result := RussianText
+  else Result := EnglishText;
+end;
 procedure InitializeWizard();
 var
   UninstallKey, ExistingDir: String;
@@ -96,24 +109,24 @@ begin
   if (LegacyInstallDir = '') or InstallFolderRenamed then Exit;
   if CompareText(RemoveBackslashUnlessRoot(WizardDirValue()), RenamedInstallDir) <> 0 then
   begin
-    Result := 'Для обновления с переименованием папки выберите ' + RenamedInstallDir;
+    Result := TextLang('Для обновления с переименованием папки выберите ', 'To update and rename the installation folder, select ') + RenamedInstallDir;
     Exit;
   end;
   if CheckForMutexes('{#MyAppMutex}') then
   begin
-    Result := 'Закройте приложение перед переименованием папки установки.';
+    Result := TextLang('Закройте приложение перед переименованием папки установки.', 'Close the application before renaming the installation folder.');
     Exit;
   end;
   if DirExists(RenamedInstallDir) or FileExists(RenamedInstallDir) then
   begin
-    Result := 'Папка назначения уже существует: ' + RenamedInstallDir +
-      '. Переименование остановлено, существующие файлы сохранены.';
+    Result := TextLang('Папка назначения уже существует: ', 'The destination folder already exists: ') + RenamedInstallDir +
+      TextLang('. Переименование остановлено, существующие файлы сохранены.', '. Renaming has been stopped; existing files have been preserved.');
     Exit;
   end;
   if not RenameFile(LegacyInstallDir, RenamedInstallDir) then
   begin
-    Result := 'Не удалось переименовать ' + LegacyInstallDir + ' в ' + RenamedInstallDir +
-      '. Проверьте права доступа и закройте программы, использующие эту папку.';
+    Result := TextLang('Не удалось переименовать ', 'Could not rename ') + LegacyInstallDir + TextLang(' в ', ' to ') + RenamedInstallDir +
+      TextLang('. Проверьте права доступа и закройте программы, использующие эту папку.', '. Check access permissions and close applications using this folder.');
     Exit;
   end;
   InstallFolderRenamed := True;
@@ -128,7 +141,7 @@ procedure DeinitializeSetup();
 begin
   if InstallFolderRenamed and not InstallationCompleted then
     if not RenameFile(RenamedInstallDir, LegacyInstallDir) then
-      SuppressibleMsgBox('Не удалось вернуть прежнее имя папки. Файлы сохранены в ' +
+      SuppressibleMsgBox(TextLang('Не удалось вернуть прежнее имя папки. Файлы сохранены в ', 'Could not restore the previous folder name. Files are preserved in ') +
         RenamedInstallDir, mbError, MB_OK, IDOK);
 end;
 
@@ -144,9 +157,9 @@ function ConfirmUserDataRemoval(): Boolean;
 begin
   Result := False;
   if DirExists(UserDataRoot()) then
-    Result := MsgBox('Удалить сохранённые настройки текущего пользователя? ' +
-      'Будут удалены профили серверов, сохранённые пароли и параметры приложения. ' +
-      'Нажмите «Нет», чтобы сохранить их для следующей установки.',
+    Result := MsgBox(TextLang('Удалить сохранённые настройки текущего пользователя? ', 'Delete saved settings for the current user? ') +
+      TextLang('Будут удалены профили серверов, сохранённые пароли и параметры приложения. ', 'Server profiles, saved passwords and application settings will be deleted. ') +
+      TextLang('Нажмите «Нет», чтобы сохранить их для следующей установки.', 'Choose No to keep them for the next installation.'),
       mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
 end;
 
@@ -161,10 +174,10 @@ begin
   { Do not traverse a redirected publisher directory or application directory. }
   if ((GetFileAttributes(ExtractFileDir(Path)) and $400) <> 0) or
      ((GetFileAttributes(Path) and $400) <> 0) then
-    MsgBox('Данные приложения находятся в перенаправленной папке и были сохранены.',
+    MsgBox(TextLang('Данные приложения находятся в перенаправленной папке и были сохранены.', 'Application data is in a redirected folder and has been preserved.'),
       mbError, MB_OK)
   else if not DelTree(Path, True, True, True) then
-    MsgBox('Не удалось полностью удалить настройки приложения.', mbError, MB_OK);
+    MsgBox(TextLang('Не удалось полностью удалить настройки приложения.', 'Could not completely remove application settings.'), mbError, MB_OK);
 end;
 
 function InitializeSetup(): Boolean;
@@ -193,8 +206,8 @@ begin
         not GetPackedVersion(AddBackslash(InstallDir) + 'MSTSC_MAUI.exe', InstalledVersion)) then
     begin
       Result := False;
-      SuppressibleMsgBox('Не удалось определить версию установленного приложения. ' +
-        'Удалите текущую копию перед установкой.', mbError, MB_OK, IDOK);
+      SuppressibleMsgBox(TextLang('Не удалось определить версию установленного приложения. ', 'Could not determine the installed application version. ') +
+        TextLang('Удалите текущую копию перед установкой.', 'Uninstall the current copy before installing.'), mbError, MB_OK, IDOK);
       Exit;
     end;
     InstalledVersionText := VersionToStr(InstalledVersion);
@@ -221,24 +234,24 @@ begin
   begin
     Result := False;
     Choice := TaskDialogMsgBox(
-      'Установлена более новая версия',
-      'Установлена версия ' + InstalledVersionText + ', в установщике — {#MyAppVersion}. ' +
-      'Установка старой версии поверх новой запрещена. Можно удалить текущую версию ' +
-      'и затем продолжить установку {#MyAppVersion}.',
-      mbConfirmation, MB_YESNO, ['Удалить текущую и установить старую', 'Отмена'], 0);
+      TextLang('Установлена более новая версия', 'A newer version is installed'),
+      TextLang('Установлена версия ', 'Installed version: ') + InstalledVersionText + TextLang(', в установщике — {#MyAppVersion}. ', '; installer version: {#MyAppVersion}. ') +
+      TextLang('Установка старой версии поверх новой запрещена. Можно удалить текущую версию ', 'Installing an older version over a newer one is not allowed. You can uninstall the current version ') +
+      TextLang('и затем продолжить установку {#MyAppVersion}.', 'and then continue installing {#MyAppVersion}.'),
+      mbConfirmation, MB_YESNO, [TextLang('Удалить текущую и установить старую', 'Uninstall current and install older'), TextLang('Отмена', 'Cancel')], 0);
     if Choice <> IDYES then
       Exit;
   end
   else if not WizardSilent() then
   begin
     if Comparison = 0 then
-      ActionText := 'Переустановить'
+      ActionText := TextLang('Переустановить', 'Reinstall')
     else
-      ActionText := 'Обновить';
+      ActionText := TextLang('Обновить', 'Update');
     Choice := TaskDialogMsgBox(
-      '{#MyAppName} уже установлен',
-      'Установлена версия ' + InstalledVersionText + ', в установщике — {#MyAppVersion}.',
-      mbConfirmation, MB_YESNOCANCEL, [ActionText, 'Удалить', 'Отмена'], 0);
+      TextLang('{#MyAppName} уже установлен', '{#MyAppName} is already installed'),
+      TextLang('Установлена версия ', 'Installed version: ') + InstalledVersionText + TextLang(', в установщике — {#MyAppVersion}.', '; installer version: {#MyAppVersion}.'),
+      mbConfirmation, MB_YESNOCANCEL, [ActionText, TextLang('Удалить', 'Uninstall'), TextLang('Отмена', 'Cancel')], 0);
     if Choice = IDYES then Exit;
     Result := False;
     if Choice <> IDNO then Exit;
@@ -248,12 +261,12 @@ begin
   if not RegQueryStringValue(HKA, UninstallKey, 'UninstallString', UninstallCommand) or
      (Trim(UninstallCommand) = '') then
   begin
-    MsgBox('Команда удаления не найдена. Удалите текущую версию вручную.', mbError, MB_OK);
+    MsgBox(TextLang('Команда удаления не найдена. Удалите текущую версию вручную.', 'The uninstall command was not found. Uninstall the current version manually.'), mbError, MB_OK);
     Exit;
   end;
   if CheckForMutexes('{#MyAppMutex}') then
   begin
-    MsgBox('Закройте все окна {#MyAppName} перед удалением.', mbInformation, MB_OK);
+    MsgBox(TextLang('Закройте все окна {#MyAppName} перед удалением.', 'Close all {#MyAppName} windows before uninstalling.'), mbInformation, MB_OK);
     Exit;
   end;
 
@@ -261,17 +274,17 @@ begin
   if not Exec('>', UninstallCommand + ' /SILENT /NORESTART', '', SW_SHOWNORMAL,
     ewWaitUntilTerminated, ExitCode) then
   begin
-    MsgBox('Не удалось запустить удаление. ' + SysErrorMessage(ExitCode), mbError, MB_OK);
+    MsgBox(TextLang('Не удалось запустить удаление. ', 'Could not start the uninstaller. ') + SysErrorMessage(ExitCode), mbError, MB_OK);
     Exit;
   end;
   if ExitCode <> 0 then
   begin
-    MsgBox('Удаление завершилось с кодом ' + IntToStr(ExitCode) + '.', mbError, MB_OK);
+    MsgBox(TextLang('Удаление завершилось с кодом ', 'The uninstaller returned code ') + IntToStr(ExitCode) + '.', mbError, MB_OK);
     Exit;
   end;
   if RegKeyExists(HKA, UninstallKey) then
   begin
-    MsgBox('Текущая версия не удалена полностью. Установка остановлена.', mbError, MB_OK);
+    MsgBox(TextLang('Текущая версия не удалена полностью. Установка остановлена.', 'The current version was not completely removed. Setup has stopped.'), mbError, MB_OK);
     Exit;
   end;
   if DeleteSettings then

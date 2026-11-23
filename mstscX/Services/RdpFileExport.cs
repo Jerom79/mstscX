@@ -9,13 +9,13 @@ internal static class RdpFileExport
     internal static string FormatProfile(ServerProfile profile)
     {
         if (!RdpEndpoint.TryParse(profile.Address, out var endpoint))
-            throw new FormatException("В карточке указан некорректный адрес RDP.");
+            throw new FormatException(global::mstscX.Services.L.T("В карточке указан некорректный адрес RDP."));
 
         var content = new StringBuilder();
         void Text(string key, string? value)
         {
             if (value?.IndexOfAny(['\r', '\n', '\0']) >= 0)
-                throw new FormatException($"Параметр RDP «{key}» содержит недопустимый перенос строки или нулевой символ.");
+                throw new FormatException(global::mstscX.Services.L.F("Параметр RDP «{0}» содержит недопустимый перенос строки или нулевой символ.", key));
 
             content.Append(key).Append(":s:").Append(value).Append("\r\n");
         }
