@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:mstscX.ViewModels"
+             xmlns:models="clr-namespace:mstscX.Models"
+             xmlns:winui="clr-namespace:mstscX.WinUI"
+             xmlns:views="clr-namespace:mstscX.Views"
+             x:DataType="vm:MainViewModel"
+             x:Class="mstscX.MainPage"
+             Shell.NavBarIsVisible="False">
+    <ContentPage.Resources>
+        <Style x:Key="NavigationButton" TargetType="Button">
+            <Setter Property="HorizontalOptions" Value="Fill" />
+            <Setter Property="Padding" Value="14,9" />
+            <Setter Property="HeightRequest" Value="44" />
+            <Setter Property="ContentLayout" Value="Left,10" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#192C49, Dark=#E7EFFC}" />
+        </Style>
+        <Style x:Key="ServerCard" TargetType="Border">
+            <Setter Property="Stroke" Value="{AppThemeBinding Light=#D5D9E2, Dark=#4A505B}" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F5F7FB, Dark=#262A32}" />
+            <Style.Triggers>
+                <DataTrigger TargetType="Border" Binding="{Binding CardState, x:DataType=models:ServerProfile}"
+                             Value="{x:Static models:ServerCardState.Idle}">
+                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F5F7FB, Dark=#262A32}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding CardState, x:DataType=models:ServerProfile}"
+                             Value="{x:Static models:ServerCardState.Selected}">
+                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#B8D7FF, Dark=#3A64A0}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding CardState, x:DataType=models:ServerProfile}"
+                             Value="{x:Static models:ServerCardState.Active}">
+                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#DDEEE5, Dark=#234136}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding IsSelected, x:DataType=models:ServerProfile}" Value="True">
+                    <Setter Property="Stroke" Value="{AppThemeBinding Light=#2563B8, Dark=#B3DAFF}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="EditServerButton" TargetType="ImageButton">
+            <Setter Property="WidthRequest" Value="28" />
+            <Setter Property="HeightRequest" Value="28" />
+            <Setter Property="MinimumWidthRequest" Value="0" />
+            <Setter Property="MinimumHeightRequest" Value="0" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="Source" Value="{AppThemeBinding Light={winui:InterfaceImage Name=edit_server_light}, Dark={winui:InterfaceImage Name=edit_server_dark}}" />
+        </Style>
+        <Style x:Key="DisconnectServerButton" TargetType="ImageButton" BasedOn="{StaticResource EditServerButton}">
+            <Setter Property="Source" Value="{AppThemeBinding Light={winui:InterfaceImage Name=disconnect_server_light}, Dark={winui:InterfaceImage Name=disconnect_server_dark}}" />
+            <Setter Property="ToolTipProperties.Text" Value="Отключить сервер" />
+            <Setter Property="SemanticProperties.Description" Value="Отключить сервер" />
+        </Style>
+        <Style x:Key="ConnectionIcon" TargetType="Image">
+            <Setter Property="Source" Value="{AppThemeBinding Light={winui:InterfaceImage Name=server_card}, Dark={winui:InterfaceImage Name=server_card_dark}}" />
+            <Setter Property="InputTransparent" Value="True" />
+        </Style>
+        <Style x:Key="ServerCardIcon" TargetType="Image" BasedOn="{StaticResource ConnectionIcon}">
+            <Style.Triggers>
+                <MultiTrigger TargetType="Image">
+                    <MultiTrigger.Conditions>
+                        <BindingCondition Binding="{Binding RemoteApp.Enabled, x:DataType=models:ServerProfile}" Value="True" />
+                        <BindingCondition Binding="{Binding HasRemoteAppIcon, x:DataType=models:ServerProfile}" Value="False" />
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Source" Value="{AppThemeBinding Light={winui:InterfaceImage Name=remote_app_card}, Dark={winui:InterfaceImage Name=remote_app_card_dark}}" />
+                </MultiTrigger>
+                <DataTrigger TargetType="Image" Binding="{Binding HasRemoteAppIcon, x:DataType=models:ServerProfile}" Value="True">
+                    <Setter Property="Source" Value="{Binding RemoteAppIcon, x:DataType=models:ServerProfile}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <DataTemplate x:Key="ServerListItem" x:DataType="models:ServerProfile">
+            <Border HandlerChanged="OnCardHandlerChanged" Style="{StaticResource ServerCard}" Margin="12,0,20,0" Padding="26,8,12,8">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                    <Image Style="{StaticResource ServerCardIcon}" WidthRequest="24" HeightRequest="24" />
+                    <views:ServerCardName Grid.Column="1" VerticalOptions="Center"
+                                          CommitRequested="OnInlineRenameCommit" CancelRequested="OnInlineRenameCancel" />
+                    <ImageButton Grid.Column="2" Style="{StaticResource EditServerButton}" Clicked="OnEditCardClicked"
+                                 VerticalOptions="Center" ToolTipProperties.Text="Редактировать сервер"
+                                 SemanticProperties.Description="Редактировать сервер" />
+                    <ImageButton Grid.Column="3" Style="{StaticResource DisconnectServerButton}"
+                                 Clicked="OnDisconnectCardClicked" IsVisible="{Binding IsSessionActive}" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="SmallServerCard" x:DataType="models:ServerProfile">
+            <Border HandlerChanged="OnCardHandlerChanged" Style="{StaticResource ServerCard}" Margin="12,0,20,0" Padding="16,12,12,12" MinimumHeightRequest="66">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                  <Image Style="{StaticResource ServerCardIcon}" WidthRequest="32" HeightRequest="32" />
+                  <views:ServerCardName Grid.Column="1" VerticalOptions="Center"
+                                        CommitRequested="OnInlineRenameCommit" CancelRequested="OnInlineRenameCancel" />
+                  <ImageButton Grid.Column="2" Style="{StaticResource EditServerButton}" Clicked="OnEditCardClicked"
+                               VerticalOptions="Center" ToolTipProperties.Text="Редактировать сервер"
+                               SemanticProperties.Description="Редактировать сервер" />
+                  <ImageButton Grid.Column="3" Style="{StaticResource DisconnectServerButton}"
+                               Clicked="OnDisconnectCardClicked" IsVisible="{Binding IsSessionActive}" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="LargeServerCard" x:DataType="models:ServerProfile">
+            <Border HandlerChanged="OnCardHandlerChanged" Style="{StaticResource ServerCard}" Margin="12,0,20,0" Padding="24,20,20,20" MinimumHeightRequest="126">
+                <VerticalStackLayout VerticalOptions="Center" Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                        <Image Style="{StaticResource ServerCardIcon}" WidthRequest="48" HeightRequest="48"
+                               HorizontalOptions="Start" />
+                        <ImageButton Grid.Column="1" Style="{StaticResource EditServerButton}" Clicked="OnEditCardClicked"
+                                     VerticalOptions="Start" ToolTipProperties.Text="Редактировать сервер"
+                                     SemanticProperties.Description="Редактировать сервер" />
+                        <ImageButton Grid.Column="2" Style="{StaticResource DisconnectServerButton}"
+                                     Clicked="OnDisconnectCardClicked" IsVisible="{Binding IsSessionActive}" VerticalOptions="Start" />
+                    </Grid>
+                    <views:ServerCardName NameFontSize="22" CommitRequested="OnInlineRenameCommit" CancelRequested="OnInlineRenameCancel" />
+                    <Label Text="{Binding Address}" LineBreakMode="TailTruncation" />
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+    <Grid x:Name="MainLayout" ColumnDefinitions="Auto,2*,7,13*" BackgroundColor="Transparent"
+          HandlerChanged="OnImportHostChanged" SizeChanged="OnMainLayoutSizeChanged">
+        <Grid x:Name="NavigationHost" WidthRequest="200" IsClippedToBounds="True" BackgroundColor="Transparent">
+        <Grid x:Name="NavigationPane" WidthRequest="200" HorizontalOptions="Start" Padding="5,5" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="6"
+                             BackgroundColor="{AppThemeBinding Light=#EAF0FA, Dark=#182234}">
+            <Grid>
+            <Button x:Name="ServersNavigation" Style="{StaticResource NavigationButton}"
+                    HandlerChanged="OnNavigationButtonHandlerChanged"
+                    Clicked="OnShowServers" ToolTipProperties.Text="Серверы" SemanticProperties.Description="Серверы" />
+                <HorizontalStackLayout x:Name="ServersNavigationContent" Spacing="10" Margin="14,0" VerticalOptions="Center" InputTransparent="True">
+                    <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="{AppThemeBinding Light={winui:InterfaceImage Name=nav_servers_light}, Dark={winui:InterfaceImage Name=nav_servers_dark}}" />
+                    <Label x:Name="ServersNavigationLabel" Text="Серверы" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#192C49, Dark=#E7EFFC}" />
+                </HorizontalStackLayout>
+            </Grid>
+            <Grid Grid.Row="1">
+            <Button x:Name="SettingsNavigation" Style="{StaticResource NavigationButton}"
+                    HandlerChanged="OnNavigationButtonHandlerChanged"
+                    Clicked="OnShowSettings" ToolTipProperties.Text="Настройки" SemanticProperties.Description="Настройки" />
+                <HorizontalStackLayout x:Name="SettingsNavigationContent" Spacing="10" Margin="14,0" VerticalOptions="Center" InputTransparent="True">
+                    <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="{AppThemeBinding Light={winui:InterfaceImage Name=nav_settings_light}, Dark={winui:InterfaceImage Name=nav_settings_dark}}" />
+                    <Label x:Name="SettingsNavigationLabel" Text="Настройки" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#192C49, Dark=#E7EFFC}" />
+                </HorizontalStackLayout>
+            </Grid>
+            <VerticalStackLayout Grid.Row="3" Spacing="6">
+                <Grid>
+                    <Button x:Name="DisconnectAllNavigation" Style="{StaticResource NavigationButton}"
+                            Clicked="OnDisconnectAllClicked" ToolTipProperties.Text="Закрыть все соединения"
+                            SemanticProperties.Description="Закрыть все соединения" />
+                    <HorizontalStackLayout x:Name="DisconnectAllNavigationContent" Spacing="10" Margin="14,0"
+                                           VerticalOptions="Center" InputTransparent="True">
+                        <Label Text="&#xE8CD;" FontFamily="Segoe MDL2 Assets" FontSize="20" WidthRequest="24"
+                               HorizontalTextAlignment="Center" VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#192C49, Dark=#E7EFFC}" />
+                        <Label x:Name="DisconnectAllNavigationLabel" Text="Закрыть соединения"
+                               VerticalOptions="Center" TextColor="{AppThemeBinding Light=#192C49, Dark=#E7EFFC}" />
+                    </HorizontalStackLayout>
+                </Grid>
+                <Grid>
+                    <Button x:Name="ExitNavigation" Style="{StaticResource NavigationButton}"
+                            Clicked="OnExitApplicationClicked" ToolTipProperties.Text="Закрыть приложение"
+                            SemanticProperties.Description="Закрыть приложение" />
+                    <HorizontalStackLayout x:Name="ExitNavigationContent" Spacing="10" Margin="14,0"
+                                           VerticalOptions="Center" InputTransparent="True">
+                        <Label Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="20" WidthRequest="24"
+                               HorizontalTextAlignment="Center" VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#192C49, Dark=#E7EFFC}" />
+                        <Label x:Name="ExitNavigationLabel" Text="Закрыть"
+                               VerticalOptions="Center" TextColor="{AppThemeBinding Light=#192C49, Dark=#E7EFFC}" />
+                    </HorizontalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
+        </Grid>
+        </Grid>
+    <Border Grid.Column="1" x:Name="SessionLayout"
+            StrokeShape="RoundRectangle 10" StrokeThickness="1"
+            Stroke="{AppThemeBinding Light=#CFDDF1, Dark=#35455E}"
+            BackgroundColor="{AppThemeBinding Light=#F0F4F9, Dark=#19212D}">
+    <Grid Padding="0,16" RowDefinitions="Auto,*,Auto" RowSpacing="10">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="16,0">
+            <Label Text="Серверы" FontSize="18" FontAttributes="Bold"
+                   VerticalOptions="Center" LineBreakMode="TailTruncation"
+                   SemanticProperties.HeadingLevel="Level1" />
+            <ImageButton Grid.Column="1" WidthRequest="32" HeightRequest="32" Padding="6" CornerRadius="6"
+                         BackgroundColor="{AppThemeBinding Light=#DFE9F7, Dark=#27384F}"
+                         Source="{AppThemeBinding Light={winui:InterfaceImage Name=add_server_light}, Dark={winui:InterfaceImage Name=add_server_dark}}"
+                         Command="{Binding NewProfileCommand}"
+                         ToolTipProperties.Text="Добавить сервер" SemanticProperties.Description="Добавить сервер" />
+        </Grid>
+        <Grid Grid.Row="1" Padding="16,0,0,0"
+              BackgroundColor="Transparent" HandlerChanged="OnCatalogHostHandlerChanged">
+        <CollectionView x:Name="ServerCatalog" ItemsSource="{Binding ProfileGroups}" IsGrouped="True"
+                        HandlerChanged="OnCatalogHandlerChanged"
+                        SelectionMode="Single" SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                        ItemTemplate="{StaticResource ServerListItem}" SizeChanged="OnCatalogSizeChanged">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.GroupHeaderTemplate>
+                <DataTemplate x:DataType="models:ServerProfileGroup">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" Padding="0,0,0,0" Margin="0,0,20,0">
+                        <Button Grid.ColumnSpan="4" BackgroundColor="Transparent" Padding="0" MinimumHeightRequest="36"
+                                Command="{Binding ToggleCommand}" CommandParameter="{Binding .}"
+                                SemanticProperties.Description="{Binding ToggleDescription}"
+                                ToolTipProperties.Text="{Binding ToggleDescription}" />
+                                <Image Style="{StaticResource ConnectionIcon}" WidthRequest="{Binding HeaderIconSize}"
+                                         HeightRequest="{Binding HeaderIconSize}"
+                                         VerticalOptions="Center">
+                            <Image.Triggers>
+                                <DataTrigger TargetType="Image" Binding="{Binding IsRemoteApp}" Value="True">
+                                    <Setter Property="Source" Value="{AppThemeBinding Light={winui:InterfaceImage Name=remote_app_card}, Dark={winui:InterfaceImage Name=remote_app_card_dark}}" />
+                                </DataTrigger>
+                            </Image.Triggers>
+                        </Image>
+                        <Label Grid.Column="1" Text="{Binding Title}" FontAttributes="Bold"
+                               FontSize="{Binding HeaderFontSize}" VerticalOptions="Center" InputTransparent="True"
+                               TextColor="{AppThemeBinding Light=#344763, Dark=#AAC2E2}"
+                               SemanticProperties.HeadingLevel="Level2" />
+                        <Label Grid.Column="2" Text="{Binding ProfileCount}" FontSize="14" VerticalOptions="Center"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#344763, Dark=#AAC2E2}" InputTransparent="True">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsExpanded}" Value="True">
+                                    <Setter Property="IsVisible" Value="False" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Path Grid.Column="3" Data="M 4,2 L 8,6 L 4,10" StrokeThickness="1.5"
+                              Stroke="{AppThemeBinding Light=#344763, Dark=#AAC2E2}" Aspect="Uniform"
+                              WidthRequest="12" HeightRequest="12" VerticalOptions="Center" Margin="0,0,6,0" InputTransparent="True">
+                            <Path.Triggers>
+                                <DataTrigger TargetType="Path" Binding="{Binding IsExpanded}" Value="True">
+                                    <Setter Property="Rotation" Value="90" />
+                                </DataTrigger>
+                            </Path.Triggers>
+                        </Path>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.GroupHeaderTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="Список серверов пуст." Margin="0,12" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+        </Grid>
+        <Label Grid.Row="2" x:Name="StatusLabel" Text="{Binding Status}" Margin="16,0">
+            <Label.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding Status}" Value="">
+                    <Setter Property="IsVisible" Value="False" />
+                </DataTrigger>
+            </Label.Triggers>
+        </Label>
+    </Grid>
+    </Border>
+        <winui:ServerPanelDivider Grid.Column="2" x:Name="ServerPanelSplitter"
+              BackgroundColor="{AppThemeBinding Light=#CFDDF1, Dark=#35455E}"
+              DragStarted="OnServerPanelDragStarted"
+              DragDelta="OnServerPanelDragDelta"
+              DragCompleted="OnServerPanelDragCompleted"
+              ToolTipProperties.Text="Перетащите для изменения ширины"
+              SemanticProperties.Description="Изменить ширину списка серверов" />
+        <ScrollView Grid.Column="1" Grid.ColumnSpan="3" x:Name="SettingsPanel" IsVisible="False">
+            <VerticalStackLayout Padding="24" Spacing="16">
+                <Label Text="Настройки" FontSize="26" FontAttributes="Bold" />
+                <Border Padding="16" StrokeShape="RoundRectangle 8"
+                        Stroke="{AppThemeBinding Light=#CFDDF1, Dark=#3D506E}"
+                        BackgroundColor="{AppThemeBinding Light=#F7FAFF, Dark=#222E44}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Тема приложения" FontAttributes="Bold" />
+                        <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="16" HorizontalOptions="Start">
+                            <VerticalStackLayout Grid.Column="0" Spacing="6" HorizontalOptions="Center">
+                                <Border x:Name="SystemThemeRing" WidthRequest="88" HeightRequest="88"
+                                        StrokeThickness="2" Stroke="Transparent" StrokeShape="RoundRectangle 44">
+                                    <Grid>
+                                        <GraphicsView x:Name="SystemThemePreview" InputTransparent="True" />
+                                        <Button BackgroundColor="Transparent" Padding="0"
+                                                SemanticProperties.Description="Автоматически"
+                                                CommandParameter="0" Clicked="OnThemeSelected" />
+                                    </Grid>
+                                </Border>
+                                <Label Text="Автоматически" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="6" HorizontalOptions="Center">
+                                <Border x:Name="LightThemeRing" WidthRequest="88" HeightRequest="88"
+                                        StrokeThickness="2" Stroke="Transparent" StrokeShape="RoundRectangle 44">
+                                    <Grid>
+                                        <GraphicsView x:Name="LightThemePreview" InputTransparent="True" />
+                                        <Button BackgroundColor="Transparent" Padding="0"
+                                                SemanticProperties.Description="Светлая"
+                                                CommandParameter="1" Clicked="OnThemeSelected" />
+                                    </Grid>
+                                </Border>
+                                <Label Text="Светлая" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2" Spacing="6" HorizontalOptions="Center">
+                                <Border x:Name="DarkThemeRing" WidthRequest="88" HeightRequest="88"
+                                        StrokeThickness="2" Stroke="Transparent" StrokeShape="RoundRectangle 44">
+                                    <Grid>
+                                        <GraphicsView x:Name="DarkThemePreview" InputTransparent="True" />
+                                        <Button BackgroundColor="Transparent" Padding="0"
+                                                SemanticProperties.Description="Тёмная"
+                                                CommandParameter="2" Clicked="OnThemeSelected" />
+                                    </Grid>
+                                </Border>
+                                <Label Text="Тёмная" HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+                <Border Padding="16" StrokeShape="RoundRectangle 8"
+                        Stroke="{AppThemeBinding Light=#CFDDF1, Dark=#3D506E}"
+                        BackgroundColor="{AppThemeBinding Light=#F7FAFF, Dark=#222E44}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Подключения" FontAttributes="Bold" SemanticProperties.HeadingLevel="Level2" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                            <Label Text="Выдавать предупреждение при закрытии соединения" VerticalOptions="Center" />
+                            <Switch Grid.Column="1" x:Name="WarnBeforeClosingSwitch" VerticalOptions="Center"
+                                    Toggled="OnWarnBeforeClosingToggled"
+                                    SemanticProperties.Description="Выдавать предупреждение при закрытии соединения" />
+                        </Grid>
+                        <Label Text="Вид" FontAttributes="Bold" SemanticProperties.HeadingLevel="Level2" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                            <Label Text="Скрывать боковую панель" VerticalOptions="Center" />
+                            <Switch Grid.Column="1" x:Name="AutoHideNavigationSwitch" Toggled="OnAutoHideNavigationToggled"
+                                    SemanticProperties.Description="Скрывать боковую панель" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                            <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                                <Label Text="Показывать уменьшенную панель под курсором" />
+                                <Label Text="При подведении курсора к верхнему краю в полноэкранном режиме. Если выключено, панель появляется на сохранённом месте."
+                                       FontSize="13" TextColor="{AppThemeBinding Light=#52657E, Dark=#B4C4DA}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1" x:Name="CompactPanelAtPointerSwitch" VerticalOptions="Center"
+                                    Toggled="OnCompactPanelAtPointerToggled"
+                                    SemanticProperties.Description="Показывать уменьшенную панель под курсором" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+        <Border Grid.Column="3" x:Name="RdpPanel" StrokeThickness="1"
+                StrokeShape="RoundRectangle 10"
+                Stroke="{AppThemeBinding Light=#CFDDF1, Dark=#35455E}"
+                BackgroundColor="{AppThemeBinding Light=#F8FAFD, Dark=#141B25}">
+          <Grid>
+            <Grid x:Name="EmbeddedSessionHost" IsVisible="False" />
+            <Grid x:Name="SessionNotice" Padding="24">
+            <VerticalStackLayout Spacing="12" VerticalOptions="Center">
+                <Grid x:Name="SessionElementIconHost" WidthRequest="96" HeightRequest="96"
+                      HorizontalOptions="Center" IsVisible="False">
+                    <Grid.Triggers>
+                        <DataTrigger TargetType="Grid" Binding="{Binding RemoteApp.Enabled, x:DataType=models:ServerProfile}" Value="True">
+                            <Setter Property="WidthRequest" Value="48" />
+                            <Setter Property="HeightRequest" Value="48" />
+                        </DataTrigger>
+                    </Grid.Triggers>
+                    <Image x:Name="SessionElementIcon" Style="{StaticResource ServerCardIcon}"
+                           Aspect="AspectFit" HorizontalOptions="Fill" VerticalOptions="Fill" />
+                </Grid>
+                <Image x:Name="SessionErrorIcon" Source="{winui:InterfaceImage Name=rdp_error}" IsVisible="False"
+                       WidthRequest="56" HeightRequest="56" HorizontalOptions="Center" />
+                <Label x:Name="SessionNoticeEndpoint" IsVisible="False" FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" LineBreakMode="CharacterWrap" />
+                <Label x:Name="SessionMessage" HorizontalTextAlignment="Center" />
+                <Grid x:Name="DisconnectedSessionActions" IsVisible="False"
+                      ColumnDefinitions="*,*" ColumnSpacing="8" MaximumWidthRequest="300">
+                    <Button Text="Подключить" Command="{Binding ConnectProfileCommand}" />
+                    <Button Grid.Column="1" Text="Редактировать" Command="{Binding EditProfileCommand}" />
+                </Grid>
+                <Button x:Name="ActivateExternalSession" Text="Перейти к подключению"
+                        HorizontalOptions="Center" Clicked="OnActivateSelectedSession" />
+                <Button x:Name="DisconnectRemoteApp" Text="Отключить RemoteApp" IsVisible="False"
+                        HorizontalOptions="Center" Clicked="OnDisconnectRemoteApp" />
+            </VerticalStackLayout>
+            </Grid>
+          </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

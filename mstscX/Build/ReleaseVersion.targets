@@ -1,0 +1,55 @@
+<Project>
+  <UsingTask TaskName="IncrementMstscXReleaseVersion" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <ProjectFile ParameterType="System.String" Required="true" />
+      <Revision ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Using Namespace="System.Globalization" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        // Read the persisted counter, not an MSBuild value cached before this build.
+        using (var file = new FileStream(ProjectFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            string text;
+            using (var reader = new StreamReader(file, Encoding.UTF8, true, 4096, true))
+                text = reader.ReadToEnd();
+            var pattern = new Regex(@"(<ApplicationVersion>)(\d+)(</ApplicationVersion>)");
+            var matches = pattern.Matches(text);
+            if (matches.Count != 1)
+                throw new InvalidDataException("Expected one numeric ApplicationVersion in the project.");
+            int next = checked(int.Parse(matches[0].Groups[2].Value, CultureInfo.InvariantCulture) + 1);
+            if (next > 65534)
+                throw new InvalidDataException("Release revision exhausted; increase the main version first.");
+            Revision = next.ToString(CultureInfo.InvariantCulture);
+            string updated = pattern.Replace(text, m => m.Groups[1].Value + Revision + m.Groups[3].Value, 1);
+            byte[] bytes = new UTF8Encoding(false).GetBytes(updated);
+            file.Position = 0;
+            file.Write(bytes, 0, bytes.Length);
+            file.SetLength(bytes.Length);
+            file.Flush(true);
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <!-- Runs once per Build/Rebuild/Publish graph, before resources and assembly metadata.
+       Restore, Clean, design-time builds and publishing without building do not consume a version.
+       A failed Release attempt keeps its allocated version to avoid reusing it. -->
+  <Target Name="AdvanceReleaseVersion" BeforeTargets="PrepareForBuild"
+          Condition="'$(Configuration)' == 'Release' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true'">
+    <IncrementMstscXReleaseVersion ProjectFile="$(MSBuildProjectFullPath)">
+      <Output TaskParameter="Revision" PropertyName="ApplicationVersion" />
+    </IncrementMstscXReleaseVersion>
+    <PropertyGroup>
+      <AssemblyVersion>$(ApplicationDisplayVersion).$(ApplicationVersion)</AssemblyVersion>
+      <FileVersion>$(AssemblyVersion)</FileVersion>
+      <InformationalVersion>$(AssemblyVersion)</InformationalVersion>
+      <Version>$(AssemblyVersion)</Version>
+    </PropertyGroup>
+    <Message Importance="high" Text="mstscX Release: $(AssemblyVersion)" />
+  </Target>
+</Project>

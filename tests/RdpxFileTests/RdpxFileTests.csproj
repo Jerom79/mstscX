@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../mstscX/Services/RdpxFile.cs" Link="RdpxFile.cs" />
+    <Compile Include="../../mstscX/Models/ServerProfile.cs" Link="ServerProfile.cs" />
+    <Compile Include="../../mstscX/Models/RdpEndpoint.cs" Link="RdpEndpoint.cs" />
+  </ItemGroup>
+</Project>

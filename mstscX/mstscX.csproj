@@ -1,0 +1,193 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+
+		<OutputType>Exe</OutputType>
+		<RootNamespace>mstscX</RootNamespace>
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<!-- Release must execute the version target even when VS considers outputs current. -->
+		<DisableFastUpToDateCheck Condition="'$(Configuration)' == 'Release'">true</DisableFastUpToDateCheck>
+
+		<!-- Enable XAML source generation for faster build times and improved performance.
+		     This generates C# code from XAML at compile time instead of runtime inflation.
+		     To disable, remove this line.
+		     For individual files, you can override by setting Inflator metadata:
+		       <MauiXaml Update="MyPage.xaml" Inflator="Default" /> (reverts to defaults: Runtime for Debug, XamlC for Release)
+		       <MauiXaml Update="MyPage.xaml" Inflator="Runtime" /> (force runtime inflation) -->
+		<MauiXamlInflator>SourceGen</MauiXamlInflator>
+
+		<!-- Display name -->
+		<ApplicationTitle>mstscX</ApplicationTitle>
+
+		<!-- Keep the original identity: MAUI uses it for existing preferences and cached profiles. -->
+		<ApplicationId>com.companyname.mstsc_maui</ApplicationId>
+
+		<!-- Versions -->
+		<ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
+		<ApplicationVersion>6</ApplicationVersion>
+		<AssemblyVersion>$(ApplicationDisplayVersion).$(ApplicationVersion)</AssemblyVersion>
+		<FileVersion>$(AssemblyVersion)</FileVersion>
+		<InformationalVersion>$(AssemblyVersion)</InformationalVersion>
+
+		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
+		<WindowsPackageType>None</WindowsPackageType>
+		<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+
+		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- App Icon -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" />
+
+		<!-- Splash Screen -->
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#2459A0" BaseSize="128,128" />
+
+		<!-- Images -->
+		<MauiImage Include="Resources\Images\*.svg" />
+		
+		<!-- Custom Fonts -->
+		<MauiFont Include="Resources\Fonts\*" />
+
+		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<Import Project="Build\ReleaseVersion.targets" />
+
+	<Target Name="SetInterfaceImagePaths" AfterTargets="ResizetizeImages">
+		<ItemGroup>
+			<ContentWithTargetPath Update="@(_ResizetizerCollectedImages)"
+			                       Condition="'%(ContentWithTargetPath.Extension)' == '.png' and !$([System.Text.RegularExpressions.Regex]::IsMatch('%(ContentWithTargetPath.Filename)', '^(appicon|splashSplashScreen)'))">
+				<TargetPath>Images\%(ContentWithTargetPath.Filename)%(ContentWithTargetPath.Extension)</TargetPath>
+			</ContentWithTargetPath>
+		</ItemGroup>
+	</Target>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<PackageReference Include="System.Management" Version="9.0.3" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<BuildShortcutPrefix>$(MSBuildProjectDirectory)\..\$(MSBuildProjectName) - $(Configuration)</BuildShortcutPrefix>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<UpToDateCheckOutput Include="$(BuildShortcutPrefix) - ??-??-??.lnk" Condition="'$(BuildShortcutPath)' == ''" />
+		<UpToDateCheckOutput Include="$(BuildShortcutPath)" Condition="'$(BuildShortcutPath)' != ''" />
+	</ItemGroup>
+
+	<UsingTask TaskName="CreateWindowsBuildShortcut" TaskFactory="RoslynCodeTaskFactory"
+	           AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+		<ParameterGroup>
+			<ShortcutPath ParameterType="System.String" Required="true" />
+			<ExecutablePath ParameterType="System.String" Required="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System.IO" />
+			<Using Namespace="System.Reflection" />
+			<Using Namespace="System.Runtime.InteropServices" />
+			<Code Type="Fragment" Language="cs"><![CDATA[
+				string executable = Path.GetFullPath(ExecutablePath);
+				var shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell", true));
+				object shortcut = null;
+				try
+				{
+					shortcut = shell.GetType().InvokeMember("CreateShortcut", BindingFlags.InvokeMethod,
+						null, shell, new object[] { Path.GetFullPath(ShortcutPath) });
+					var type = shortcut.GetType();
+					type.InvokeMember("TargetPath", BindingFlags.SetProperty, null, shortcut,
+						new object[] { executable });
+					type.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, shortcut,
+						new object[] { Path.GetDirectoryName(executable) });
+					type.InvokeMember("Save", BindingFlags.InvokeMethod, null, shortcut, null);
+				}
+				finally
+				{
+					if (shortcut != null)
+						Marshal.ReleaseComObject(shortcut);
+					Marshal.ReleaseComObject(shell);
+				}
+			]]></Code>
+		</Task>
+	</UsingTask>
+
+	<UsingTask TaskName="RemoveUnusedReleaseLanguages" TaskFactory="RoslynCodeTaskFactory"
+	           AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+		<ParameterGroup>
+			<OutputDirectory ParameterType="System.String" Required="true" />
+			<ProjectDirectory ParameterType="System.String" Required="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System.IO" />
+			<Using Namespace="System.Linq" />
+			<Using Namespace="System.Text.RegularExpressions" />
+			<Code Type="Fragment" Language="cs"><![CDATA[
+				var output = new DirectoryInfo(Path.Combine(ProjectDirectory, OutputDirectory));
+				if (!output.Exists || (output.Attributes & FileAttributes.ReparsePoint) != 0)
+					return true;
+
+				foreach (var directory in output.EnumerateDirectories())
+				{
+					var culture = Regex.Match(directory.Name, @"^([a-z]{2,3})(?:-[a-z0-9]{2,8})*$",
+						RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+					string language = culture.Groups[1].Value;
+					if (!culture.Success ||
+						language.Equals("en", StringComparison.OrdinalIgnoreCase) ||
+						language.Equals("ru", StringComparison.OrdinalIgnoreCase) ||
+						(directory.Attributes & FileAttributes.ReparsePoint) != 0 ||
+						directory.EnumerateDirectories().Any())
+						continue;
+
+					var files = directory.GetFiles();
+					if (files.Length == 0 || files.Any(file =>
+						(file.Attributes & FileAttributes.ReparsePoint) != 0 ||
+						(!file.Name.EndsWith(".mui", StringComparison.OrdinalIgnoreCase) &&
+						 !file.Name.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase))))
+						continue;
+
+					foreach (var file in files)
+						file.Delete();
+					directory.Delete();
+				}
+			]]></Code>
+		</Task>
+	</UsingTask>
+
+	<Target Name="FilterReleaseBuildLanguages" AfterTargets="Build"
+	        Condition="'$(OS)' == 'Windows_NT' and '$(Configuration)' == 'Release' and '$(DesignTimeBuild)' != 'true'">
+		<RemoveUnusedReleaseLanguages OutputDirectory="$(TargetDir)" ProjectDirectory="$(MSBuildProjectDirectory)" />
+	</Target>
+
+	<Target Name="FilterReleasePublishLanguages" AfterTargets="Publish;PublishOnly"
+	        Condition="'$(OS)' == 'Windows_NT' and '$(Configuration)' == 'Release' and '$(DesignTimeBuild)' != 'true' and '$(PublishDir)' != ''">
+		<RemoveUnusedReleaseLanguages OutputDirectory="$(PublishDir)" ProjectDirectory="$(MSBuildProjectDirectory)" />
+	</Target>
+
+	<Target Name="RemovePreviousBuildShortcut" BeforeTargets="PrepareForBuild"
+	        Condition="'$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true'">
+		<ItemGroup>
+			<PreviousBuildShortcut Include="$(BuildShortcutPrefix).lnk;$(BuildShortcutPrefix) - ??-??-??.lnk"
+			                       Condition="'$(BuildShortcutPath)' == ''" />
+			<PreviousBuildShortcut Include="$(BuildShortcutPath)" Condition="'$(BuildShortcutPath)' != ''" />
+		</ItemGroup>
+		<Delete Files="@(PreviousBuildShortcut)" />
+	</Target>
+
+	<Target Name="CreateBuildShortcut" AfterTargets="Build"
+	        Condition="'$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true' and Exists('$(TargetDir)$(TargetName).exe')">
+		<PropertyGroup>
+			<CurrentBuildShortcutPath Condition="'$(BuildShortcutPath)' != ''">$(BuildShortcutPath)</CurrentBuildShortcutPath>
+			<CurrentBuildShortcutPath Condition="'$(BuildShortcutPath)' == ''">$(BuildShortcutPrefix) - $([System.DateTime]::Now.ToString('HH-mm-ss')).lnk</CurrentBuildShortcutPath>
+		</PropertyGroup>
+		<CreateWindowsBuildShortcut ShortcutPath="$(CurrentBuildShortcutPath)"
+		                            ExecutablePath="$(TargetDir)$(TargetName).exe" />
+	</Target>
+</Project>
