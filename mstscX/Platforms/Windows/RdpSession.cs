@@ -100,13 +100,14 @@ internal sealed class RdpSession : IDisposable
 
     public RdpSession(nint parentWindow, (int X, int Y, int Width, int Height) initialBounds,
         (int Width, int Height)? remoteAppWorkArea = null, bool useXamlComposition = true,
-        bool useNativeRemoteAppHost = false)
+        bool useNativeRemoteAppHost = false, bool initiallyVisible = true)
     {
         if (useNativeRemoteAppHost && remoteAppWorkArea is null)
             throw new ArgumentException(global::mstscX.Services.L.T("Хост Win32 для RemoteApp требует рабочую область приложения."), nameof(remoteAppWorkArea));
         this.parentWindow = parentWindow;
         this.useXamlComposition = useXamlComposition && !useNativeRemoteAppHost;
         this.remoteAppWorkArea = remoteAppWorkArea;
+        viewportVisible = initiallyVisible;
         var dispatcher = DispatcherQueue.GetForCurrentThread();
         resizeTimer = dispatcher.CreateTimer();
         resizeTimer.Interval = TimeSpan.FromMilliseconds(250);
@@ -193,7 +194,8 @@ internal sealed class RdpSession : IDisposable
             if (remoteAppWorkArea is null)
                 EnableNativeChildRendering();
 
-            uint hostStyle = remoteAppWorkArea is null ? ChildWindowStyle : ChildWindowStyle & ~VisibleWindowStyle;
+            uint hostStyle = remoteAppWorkArea is null && initiallyVisible
+                ? ChildWindowStyle : ChildWindowStyle & ~VisibleWindowStyle;
             hostWindow = CreateWindowEx(0, "Static", null, hostStyle,
                 bounds.X, bounds.Y, bounds.Width, bounds.Height, parentWindow, 0, 0, 0);
             if (hostWindow == 0)

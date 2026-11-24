@@ -289,5 +289,24 @@
   "Не удалось прочитать пароль полностью.": "Could not read the complete password.",
   "Сохранённый пароль недоступен. Введите его вручную.": "The saved password is unavailable. Enter it manually.",
   "Имя пользователя": "Username",
-  "Переподключить": "Reconnect"
+  "Переподключить": "Reconnect",
+  "Сворачивать в трей вместо закрытия": "Minimize to tray instead of closing",
+  "Открыть mstscX": "Open mstscX",
+
+  "В выпуске отсутствует контрольная сумма установщика.": "The release does not contain an installer checksum.",
+  "Размер установщика не совпадает с опубликованным.": "The installer size does not match the published size.",
+  "Контрольная сумма установщика не совпадает. Скачайте обновление повторно.": "The installer checksum does not match. Download the update again.",
+  "Проверка обновлений…": "Checking for updates…",
+  "Установлена последняя версия.": "You have the latest version.",
+  "Не удалось проверить обновления. Повторите позже.": "Could not check for updates. Try again later.",
+  "Доступна версия {0}": "Version {0} is available",
+  "Скачать обновление": "Download update",
+  "Установить и закрыть": "Install and close",
+  "Скачивание обновления: {0}%": "Downloading update: {0}%",
+  "Не удалось запустить установщик.": "Could not start the installer.",
+  "Загрузка отменена или превышено время ожидания. Попробуйте снова.": "The download was cancelled or timed out. Try again.",
+  "Не удалось подготовить обновление: {0}": "Could not prepare the update: {0}",
+  "Проверить обновления": "Check for updates",
+  "Скрыть уведомление": "Dismiss notification",
+  "Демонстрация обновления: скачивание и установка отключены.": "Update preview: downloading and installation are disabled."
 }

@@ -46,7 +46,7 @@ public partial class MainPage : ContentPage
                     ToggleMainWindowFullScreen();
                     if (nativeWindow.AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
                         presenter.Maximize();
-                }, RequestMainWindowClose, point =>
+                }, RequestCaptionClose, point =>
                 {
                     ToggleMainWindowFullScreen();
                     if (nativeWindow.AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
@@ -275,6 +275,7 @@ public partial class MainPage : ContentPage
         this.viewModel = viewModel;
         BindingContext = viewModel;
         InitializeNavigationAutoHide();
+        InitializeTraySetting();
         CompactPanelAtPointerSwitch.IsToggled = Services.ViewSettings.CompactPanelAtPointer;
         WarnBeforeClosingSwitch.IsToggled = WinUI.ConnectionCloseConfirmation.Enabled;
         SystemThemePreview.Drawable = systemPreview;
@@ -300,6 +301,7 @@ public partial class MainPage : ContentPage
         viewModel.ProfileRenamed += UpdateOpenSessionName;
         viewModel.ActivateExistingSession = TryActivateExistingSession;
         Loaded += InitializeTaskbar;
+        Loaded += (_, _) => StartUpdateChecks();
     }
 
     private void UpdateOpenSessionName(ServerProfile profile)
@@ -322,6 +324,7 @@ public partial class MainPage : ContentPage
 
     private void ActivateTaskbarProfile(Guid? id)
     {
+        if (hiddenToTray) ShowMainFromTray();
         if (confirmingMainWindowClose || mainWindowCloseApproved)
             return;
 
@@ -841,6 +844,8 @@ public partial class MainPage : ContentPage
         UpdateEditMenu();
         var helpMenu = new Microsoft.UI.Xaml.Controls.MenuBarItem { Title = global::mstscX.Services.L.T("Справка") };
         helpMenu.Items.Add(CreateMenuItem(global::mstscX.Services.L.T("О программе"), MenuSymbol.Help, async () => await ShowAboutAsync()));
+        helpMenu.Items.Add(CreateMenuItem(global::mstscX.Services.L.T("Проверить обновления"), MenuSymbol.Refresh,
+            async () => await CheckUpdatesAsync(true, updateLifetime?.Token ?? CancellationToken.None)));
         return ([fileMenu, viewMenu, editMenu, helpMenu], () =>
         {
             viewModel.PropertyChanged -= updateMenu;
@@ -1036,6 +1041,7 @@ public partial class MainPage : ContentPage
         window.HandlerChanged += (_, _) => AttachWindow();
         window.Created += (_, _) => { AttachWindow(); mainWindowPlacement?.Restore(); };
         window.Destroying += (_, _) => DetachWindow();
+        window.Destroying += (_, _) => StopUpdateChecks();
         AttachWindow();
 
         void AttachWindow()
@@ -1049,6 +1055,7 @@ public partial class MainPage : ContentPage
             if (nativeMainWindow is { } owner)
             {
                 owner.AppWindow.Closing += OnMainWindowClosing;
+                if (closeToTray) EnsureSystemTray();
                 mainWindowPlacement = new WinUI.MainWindowPlacement(owner.AppWindow,
                     () => embeddedFullScreen || mainWindowPresenter is not null);
                 nint handle = WinRT.Interop.WindowNative.GetWindowHandle(owner);
@@ -1060,6 +1067,8 @@ public partial class MainPage : ContentPage
 
         void DetachWindow()
         {
+            systemTray?.Dispose();
+            systemTray = null;
             mainWindowFullScreenKey?.Dispose();
             mainWindowFullScreenKey = null;
             mainWindowPlacement?.Dispose();
@@ -1079,12 +1088,14 @@ public partial class MainPage : ContentPage
         }
 
         args.Cancel = true;
-        RequestMainWindowClose();
+        RequestCaptionClose();
     }
 
     private int OpenSessionCount => nativeSessions.Count + embeddedSessions.Count + remoteAppSessions.Count;
 
-    private void RequestMainWindowClose()
+    private void RequestMainWindowClose() => RequestMainWindowClose(null);
+
+    private void RequestMainWindowClose(Action? beforeClose)
     {
         if (mainWindowCloseApproved || confirmingMainWindowClose ||
             nativeMainWindow is not { } owner)
@@ -1100,6 +1111,13 @@ public partial class MainPage : ContentPage
                     global::mstscX.Services.L.T("Отключить и закрыть"), global::mstscX.Services.L.T("Отмена")))
                     return;
 
+                try { beforeClose?.Invoke(); }
+                catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException)
+                {
+                    UpdateNoticeText.Text = global::mstscX.Services.L.T("Не удалось запустить установщик.");
+                    UpdateNotice.IsVisible = true;
+                    return;
+                }
                 mainWindowCloseApproved = true;
                 mainWindowPlacement?.Save();
                 // This callback is already outside a menu Click handler. Close
@@ -1177,7 +1195,7 @@ public partial class MainPage : ContentPage
         if (nextSession is not null)
         {
             nextSession.IsVisible = true;
-            nextSession.SetEmbeddedVisible(!confirmingMainWindowClose);
+            nextSession.SetEmbeddedVisible(!confirmingMainWindowClose && !hiddenToTray);
         }
     }
 

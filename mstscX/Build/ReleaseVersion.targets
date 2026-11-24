@@ -40,7 +40,7 @@
        Restore, Clean, design-time builds and publishing without building do not consume a version.
        A failed Release attempt keeps its allocated version to avoid reusing it. -->
   <Target Name="AdvanceReleaseVersion" BeforeTargets="PrepareForBuild"
-          Condition="'$(Configuration)' == 'Release' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true'">
+          Condition="'$(Configuration)' == 'Release' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true' and '$(SkipReleaseVersionIncrement)' != 'true'">
     <IncrementMstscXReleaseVersion ProjectFile="$(MSBuildProjectFullPath)">
       <Output TaskParameter="Revision" PropertyName="ApplicationVersion" />
     </IncrementMstscXReleaseVersion>

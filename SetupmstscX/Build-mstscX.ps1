@@ -1,5 +1,5 @@
 [CmdletBinding(SupportsShouldProcess)]
-param([string]$InnoCompiler, [switch]$SkipPublish)
+param([string]$InnoCompiler, [switch]$SkipPublish, [switch]$UseCurrentVersion)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -66,9 +66,12 @@ Assert-LocalDirectory $staging
 $null = New-Item -Path $staging, $compiled -ItemType Directory
 
 try {
+    # Package a Release built earlier without allocating a second version.
+    $versionArguments = @()
+    if ($UseCurrentVersion) { $versionArguments += '-p:SkipReleaseVersionIncrement=true' }
     & dotnet publish $project -c Release -r win-x64 --self-contained true -o $publish `
         -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true -p:PublishSingleFile=false `
-        -p:PublishTrimmed=false -p:DebugType=None "-p:BuildShortcutPath=$staging\mstscX.lnk"
+        -p:PublishTrimmed=false -p:DebugType=None "-p:BuildShortcutPath=$staging\mstscX.lnk" @versionArguments
     if ($LASTEXITCODE -ne 0) { throw "Ошибка публикации mstscX ($LASTEXITCODE)." }
 
     Assert-LocalDirectory $publish

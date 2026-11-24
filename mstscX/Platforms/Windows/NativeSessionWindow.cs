@@ -93,9 +93,9 @@ internal sealed class NativeSessionWindow
                     SendMessage(window, 0x0080, size, icon);
                 }
             }
-            notice = CreateChild("EDIT", "", 0x00200845, 0); // centered, multiline, read-only, vertical scrolling for long errors
-            noticeImage = CreateChild("STATIC", "", 0x0043, 0); // SS_ICON | SS_REALSIZECONTROL
-            errorImage = CreateChild("STATIC", "", 0x0803, 0);
+            notice = CreateChild("EDIT", "", 0x00000845, 0); // centered, multiline, read-only; no visible scrollbar
+            noticeImage = CreateChild("STATIC", "", 0x000D, 0); // SS_OWNERDRAW: alpha icon over the themed background
+            errorImage = CreateChild("STATIC", "", 0x000D, 0);
             reconnectButton = CreateChild("BUTTON", L.T("Переподключить"), 0x0001000B, ReconnectButtonId); // tab stop, owner draw
             UpdateThemeAndFont();
             TaskbarServers.SetSessionWindowIdentity(window, profile, useApplicationIconFile: true);
@@ -133,11 +133,15 @@ internal sealed class NativeSessionWindow
         connectionFailed = false;
         status = global::mstscX.Services.L.T("Подключение…");
         UpdateStatus();
+        // ShowWindow only schedules WM_PAINT. ActiveX creation/Connect can block
+        // this STA before those messages run, leaving an unpainted child square.
+        // Finish the notice (including its children) before entering COM.
+        RedrawWindow(window, 0, 0, 0x0185); // INVALIDATE | ERASE | ALLCHILDREN | UPDATENOW
         try
         {
             FullScreenTransitionTrace.EnsureStarted("Win32 session connection");
             FullScreenTransitionTrace.Write($"Win32 session host HWND=0x{window:X} xamlComposition=false");
-            var current = new RdpSession(window, GetViewportBounds(), useXamlComposition: false);
+            var current = new RdpSession(window, GetViewportBounds(), useXamlComposition: false, initiallyVisible: false);
             session = current;
             current.SetViewportVisible(false);
             current.Connected += () => dispatcher.TryEnqueue(() =>
@@ -576,12 +580,12 @@ internal sealed class NativeSessionWindow
     {
         bool dark = Application.Current?.RequestedTheme == AppTheme.Dark;
         darkTheme = dark;
-        UpdateNoticeIcon();
         backgroundColor = dark ? 0x00251B14u : 0x00FDFAF8u;
         textColor = dark ? 0x00FFFFFFu : 0x00202020u;
         nint oldBrush = background;
         background = CreateSolidBrush(backgroundColor);
         if (oldBrush != 0) DeleteObject(oldBrush);
+        UpdateNoticeIcon();
         nint oldFont = font;
         font = CreateFont(-Scale(13), 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI");
         SendMessage(notice, 0x0030, font, 1);
@@ -609,10 +613,10 @@ internal sealed class NativeSessionWindow
         }
         if (icon == 0)
             icon = LoadImage(0, Path.Combine(AppContext.BaseDirectory, "appicon.ico"), 1, Scale(96), Scale(96), 0x0010);
-        SendMessage(noticeImage, 0x0170, icon, 0); // STM_SETICON
         if (noticeIcon != 0) DestroyIcon(noticeIcon);
         noticeIcon = icon;
         ShowWindow(noticeImage, connected || icon == 0 ? 0 : 4);
+        InvalidateRect(noticeImage, 0, false);
         nint nextErrorIcon = 0;
         try
         {
@@ -621,10 +625,10 @@ internal sealed class NativeSessionWindow
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         { System.Diagnostics.Debug.WriteLine($"Session error icon: {ex.Message}"); }
-        SendMessage(errorImage, 0x0170, nextErrorIcon, 0);
         if (errorIcon != 0) DestroyIcon(errorIcon);
         errorIcon = nextErrorIcon;
         ShowWindow(errorImage, connectionFailed && errorIcon != 0 ? 4 : 0);
+        InvalidateRect(errorImage, 0, false);
     }
 
     private void SetTransitionsDisabled(bool disabled)
@@ -653,6 +657,17 @@ internal sealed class NativeSessionWindow
                 return 0;
             case 0x002B: // WM_DRAWITEM
                 var item = Marshal.PtrToStructure<DrawItem>(lParam);
+                if (item.Window == noticeImage || item.Window == errorImage)
+                {
+                    // Paint the background on the very first frame too. Native SS_ICON
+                    // scaling can cache an opaque bitmap before WM_CTLCOLORSTATIC runs.
+                    if (background != 0) FillRect(item.Dc, ref item.Bounds, background);
+                    nint icon = item.Window == noticeImage ? noticeIcon : errorIcon;
+                    if (icon != 0)
+                        DrawIconEx(item.Dc, item.Bounds.Left, item.Bounds.Top, icon,
+                            item.Bounds.Width, item.Bounds.Height, 0, 0, 3); // DI_NORMAL: alpha/mask
+                    return 1;
+                }
                 if (item.Window == reconnectButton)
                 {
                     FillRect(item.Dc, ref item.Bounds, background);
@@ -843,9 +858,11 @@ internal sealed class NativeSessionWindow
     [DllImport("user32.dll")] private static extern uint GetDpiForWindow(nint window);
     [DllImport("user32.dll")] private static extern int FillRect(nint dc, ref Rect rect, nint brush);
     [DllImport("user32.dll")] private static extern bool InvalidateRect(nint window, nint rect, bool erase);
+    [DllImport("user32.dll")] private static extern bool RedrawWindow(nint window, nint rect, nint region, uint flags);
     [DllImport("user32.dll", EntryPoint = "LoadCursorW")] private static extern nint LoadCursor(nint instance, nint name);
     [DllImport("user32.dll", EntryPoint = "LoadImageW", CharSet = CharSet.Unicode)] private static extern nint LoadImage(nint instance, string name, uint type, int width, int height, uint flags);
     [DllImport("user32.dll")] private static extern bool DestroyIcon(nint icon);
+    [DllImport("user32.dll")] private static extern bool DrawIconEx(nint dc, int x, int y, nint icon, int width, int height, uint step, nint brush, uint flags);
     [DllImport("user32.dll")] private static extern nint CopyIcon(nint icon);
     [DllImport("user32.dll")] private static extern nint CreateIconFromResourceEx(byte[] bits, uint size, [MarshalAs(UnmanagedType.Bool)] bool icon, uint version, int width, int height, uint flags);
     [DllImport("kernel32.dll", EntryPoint = "GetModuleHandleW", CharSet = CharSet.Unicode)] private static extern nint GetModuleHandle(string? name);

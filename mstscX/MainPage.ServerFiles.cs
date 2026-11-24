@@ -42,6 +42,7 @@ public partial class MainPage
 
     private async Task OpenServerFileAsync(string path)
     {
+        if (hiddenToTray) ShowMainFromTray();
         ActivateSessionWindow(Window);
         if (rdpFileOperationInProgress || !viewModel.CanImportProfile()) return;
         rdpFileOperationInProgress = true;
