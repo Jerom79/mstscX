@@ -288,5 +288,6 @@
   "Неверный размер пароля.": "Invalid password length.",
   "Не удалось прочитать пароль полностью.": "Could not read the complete password.",
   "Сохранённый пароль недоступен. Введите его вручную.": "The saved password is unavailable. Enter it manually.",
-  "Имя пользователя": "Username"
+  "Имя пользователя": "Username",
+  "Переподключить": "Reconnect"
 }

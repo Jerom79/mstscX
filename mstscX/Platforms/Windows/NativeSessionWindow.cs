@@ -13,6 +13,7 @@ internal sealed class NativeSessionWindow
 {
     private const string WindowClass = "mstscX.NativeSessionWindow";
     private const uint WindowStyle = 0x06CF0000; // OVERLAPPEDWINDOW | CLIPCHILDREN | CLIPSIBLINGS
+    private const int ReconnectButtonId = 101;
     private static readonly WindowProc Procedure = DispatchMessage;
     private static readonly Dictionary<nint, NativeSessionWindow> Windows = [];
     private static ushort classAtom;
@@ -29,6 +30,8 @@ internal sealed class NativeSessionWindow
     private FullScreenSessionBar? panel;
     private BorderlessSessionWindow? fullScreen;
     private nint window, notice, noticeImage, noticeIcon, font, background;
+    private nint errorImage, errorIcon, reconnectButton;
+    private bool connectionFailed, reconnectPending, reconnectFullScreen, connectionFullScreen;
     private readonly List<nint> ownedIcons = [];
     private string serverName;
     private string status = global::mstscX.Services.L.T("Подключение…");
@@ -90,8 +93,10 @@ internal sealed class NativeSessionWindow
                     SendMessage(window, 0x0080, size, icon);
                 }
             }
-            notice = CreateChild("STATIC", "", 0x0081, 0); // centered, no prefix
-            noticeImage = CreateChild("STATIC", "", 0x0803, 0); // SS_ICON | SS_REALSIZEIMAGE
+            notice = CreateChild("EDIT", "", 0x00200845, 0); // centered, multiline, read-only, vertical scrolling for long errors
+            noticeImage = CreateChild("STATIC", "", 0x0043, 0); // SS_ICON | SS_REALSIZECONTROL
+            errorImage = CreateChild("STATIC", "", 0x0803, 0);
+            reconnectButton = CreateChild("BUTTON", L.T("Переподключить"), 0x0001000B, ReconnectButtonId); // tab stop, owner draw
             UpdateThemeAndFont();
             TaskbarServers.SetSessionWindowIdentity(window, profile, useApplicationIconFile: true);
             UpdateStatus();
@@ -123,6 +128,9 @@ internal sealed class NativeSessionWindow
             return;
         HasEnded = false;
         connected = false;
+        wasConnected = false;
+        connectionFullScreen = enterFullScreen;
+        connectionFailed = false;
         status = global::mstscX.Services.L.T("Подключение…");
         UpdateStatus();
         try
@@ -390,6 +398,8 @@ internal sealed class NativeSessionWindow
             return;
         if (wasConnected)
             SessionWindowSettings.Save(profile, layout);
+        reconnectFullScreen = IsFullScreen || (!wasConnected && connectionFullScreen);
+        connectionFailed = error is not null;
         HasEnded = true;
         connected = false;
         pendingNativeRestore = false;
@@ -401,6 +411,29 @@ internal sealed class NativeSessionWindow
         status = error ?? global::mstscX.Services.L.T("Подключение завершено.");
         UpdateStatus();
         Ended?.Invoke(error);
+    }
+
+    private async void Reconnect()
+    {
+        if (closing || !HasEnded || !connectionFailed || reconnectPending) return;
+        reconnectPending = true;
+        EnableWindow(reconnectButton, false);
+        try
+        {
+            string? password = null;
+            try { password = await readPassword(); }
+            catch (Exception ex) when (ex is FormatException or UnauthorizedAccessException or COMException or ArgumentException)
+            { System.Diagnostics.Debug.WriteLine(ex); }
+            if (closing) return;
+            // With no saved password, the regular RDP credential dialog prompts the user.
+            StartConnection(password, reconnectFullScreen && profile.Display.UseMultimon, reconnectFullScreen);
+            if (!HasEnded) ReconnectStatusChanged?.Invoke(status);
+        }
+        finally
+        {
+            reconnectPending = false;
+            if (!closing) EnableWindow(reconnectButton, true);
+        }
     }
 
     internal async void RequestCloseConnection()
@@ -439,6 +472,8 @@ internal sealed class NativeSessionWindow
             if (font != 0) DeleteObject(font);
             if (background != 0) DeleteObject(background);
             if (noticeIcon != 0) DestroyIcon(noticeIcon);
+            if (errorIcon != 0) DestroyIcon(errorIcon);
+            errorIcon = 0;
             noticeIcon = 0;
             foreach (nint icon in ownedIcons) DestroyIcon(icon);
             ownedIcons.Clear();
@@ -473,6 +508,8 @@ internal sealed class NativeSessionWindow
         SetWindowText(notice, global::mstscX.Services.L.F("Адрес: {0}\r\n\r\n{1}", RdpEndpoint.FormatForDisplay(address), status));
         ShowWindow(notice, connected ? 0 : 4);
         ShowWindow(noticeImage, connected || noticeIcon == 0 ? 0 : 4);
+        ShowWindow(errorImage, connectionFailed && errorIcon != 0 ? 4 : 0);
+        ShowWindow(reconnectButton, HasEnded && connectionFailed ? 4 : 0);
         UpdateLayout();
     }
 
@@ -491,11 +528,34 @@ internal sealed class NativeSessionWindow
         try
         {
             var area = GetViewportBounds();
-            int imageSize = Scale(96);
-            int top = Math.Max(Scale(24), (area.Height - imageSize - Scale(100)) / 2);
+            int imageSize = Scale(area.Height < Scale(450) ? 48 : 96);
+            int errorSize = connectionFailed ? Scale(56) : 0;
+            int buttonHeight = connectionFailed ? Scale(44) : 0;
+            int gap = Scale(12);
+            int textWidth = Math.Max(1, Math.Min(Scale(640), area.Width - Scale(48)));
+            var textRect = new Rect { Right = textWidth };
+            nint dc = GetDC(notice);
+            int textHeight;
+            try
+            {
+                nint oldFont = SelectObject(dc, font);
+                DrawText(dc, L.F("Адрес: {0}\r\n\r\n{1}", RdpEndpoint.FormatForDisplay(address), status), -1, ref textRect, 0xC50); // CALCRECT | WORDBREAK | NOPREFIX
+                SelectObject(dc, oldFont);
+                textHeight = Math.Max(Scale(60), textRect.Height + Scale(8));
+            }
+            finally { ReleaseDC(notice, dc); }
+            int fixedHeight = imageSize + errorSize + buttonHeight + gap * (connectionFailed ? 3 : 1);
+            textHeight = Math.Min(textHeight, Math.Max(Scale(40), area.Height - fixedHeight - Scale(24)));
+            int top = Math.Max(Scale(12), (area.Height - fixedHeight - textHeight) / 2);
             Place(noticeImage, (area.Width - imageSize) / 2, top, imageSize, imageSize);
-            int textTop = top + imageSize + Scale(16);
-            Place(notice, Scale(24), textTop, Math.Max(1, area.Width - Scale(48)), Math.Max(1, area.Height - textTop - Scale(24)));
+            int textTop = top + imageSize + gap;
+            if (connectionFailed)
+            {
+                Place(errorImage, (area.Width - errorSize) / 2, textTop, errorSize, errorSize);
+                textTop += errorSize + gap;
+            }
+            Place(notice, (area.Width - textWidth) / 2, textTop, textWidth, textHeight);
+            Place(reconnectButton, (area.Width - Scale(180)) / 2, textTop + textHeight + gap, Scale(180), Scale(44));
             session?.Resize(area);
         }
         finally { changingLayout = false; }
@@ -525,6 +585,7 @@ internal sealed class NativeSessionWindow
         nint oldFont = font;
         font = CreateFont(-Scale(13), 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI");
         SendMessage(notice, 0x0030, font, 1);
+        SendMessage(reconnectButton, 0x0030, font, 1);
         if (oldFont != 0) DeleteObject(oldFont);
         int darkMode = dark ? 1 : 0;
         DwmSetWindowAttribute(window, 20, in darkMode, sizeof(int));
@@ -552,6 +613,18 @@ internal sealed class NativeSessionWindow
         if (noticeIcon != 0) DestroyIcon(noticeIcon);
         noticeIcon = icon;
         ShowWindow(noticeImage, connected || icon == 0 ? 0 : 4);
+        nint nextErrorIcon = 0;
+        try
+        {
+            byte[] png = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Images", "rdp_error.scale-400.png"));
+            nextErrorIcon = CreateIconFromResourceEx(png, (uint)png.Length, true, 0x00030000, Scale(56), Scale(56), 0);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { System.Diagnostics.Debug.WriteLine($"Session error icon: {ex.Message}"); }
+        SendMessage(errorImage, 0x0170, nextErrorIcon, 0);
+        if (errorIcon != 0) DestroyIcon(errorIcon);
+        errorIcon = nextErrorIcon;
+        ShowWindow(errorImage, connectionFailed && errorIcon != 0 ? 4 : 0);
     }
 
     private void SetTransitionsDisabled(bool disabled)
@@ -575,6 +648,30 @@ internal sealed class NativeSessionWindow
     {
         switch (message)
         {
+            case 0x0111 when lParam == reconnectButton && (wParam.ToInt64() & 0xffff) == ReconnectButtonId:
+                dispatcher.TryEnqueue(Reconnect);
+                return 0;
+            case 0x002B: // WM_DRAWITEM
+                var item = Marshal.PtrToStructure<DrawItem>(lParam);
+                if (item.Window == reconnectButton)
+                {
+                    FillRect(item.Dc, ref item.Bounds, background);
+                    bool disabled = (item.State & 4) != 0;
+                    uint color = disabled ? 0x00606060u : (item.State & 1) != 0 ? 0x00D09868u : 0x00F8CCA0u;
+                    nint brush = CreateSolidBrush(color);
+                    nint region = CreateRoundRectRgn(0, 0, item.Bounds.Width, item.Bounds.Height, Scale(16), Scale(16));
+                    FillRgn(item.Dc, region, brush);
+                    DeleteObject(region);
+                    DeleteObject(brush);
+                    SetBkMode(item.Dc, 1);
+                    SetTextColor(item.Dc, disabled ? 0x00CCCCCCu : 0x00202020u);
+                    nint oldFont = SelectObject(item.Dc, font);
+                    DrawText(item.Dc, L.T("Переподключить"), -1, ref item.Bounds, 0x825);
+                    SelectObject(item.Dc, oldFont);
+                    if ((item.State & 0x10) != 0) DrawFocusRect(item.Dc, ref item.Bounds);
+                    return 1;
+                }
+                break;
             case 0x0010: // WM_CLOSE: dispose ActiveX after leaving its native callbacks.
                 dispatcher.TryEnqueue(RequestCloseConnection);
                 return 0;
@@ -704,6 +801,13 @@ internal sealed class NativeSessionWindow
     }
 
     private delegate nint WindowProc(nint window, uint message, nint wParam, nint lParam);
+    [StructLayout(LayoutKind.Sequential)] private struct DrawItem
+    {
+        public uint Type, Id, ItemId, Action, State;
+        public nint Window, Dc;
+        public Rect Bounds;
+        public nuint Data;
+    }
     [StructLayout(LayoutKind.Sequential)] private struct Rect
     {
         public int Left, Top, Right, Bottom;
@@ -749,6 +853,14 @@ internal sealed class NativeSessionWindow
     [DllImport("gdi32.dll")] private static extern bool DeleteObject(nint obj);
     [DllImport("gdi32.dll")] private static extern uint SetTextColor(nint dc, uint color);
     [DllImport("gdi32.dll")] private static extern uint SetBkColor(nint dc, uint color);
+    [DllImport("user32.dll")] private static extern nint GetDC(nint window);
+    [DllImport("user32.dll")] private static extern int ReleaseDC(nint window, nint dc);
+    [DllImport("gdi32.dll")] private static extern nint SelectObject(nint dc, nint obj);
+    [DllImport("gdi32.dll")] private static extern int SetBkMode(nint dc, int mode);
+    [DllImport("gdi32.dll")] private static extern nint CreateRoundRectRgn(int left, int top, int right, int bottom, int width, int height);
+    [DllImport("gdi32.dll")] private static extern bool FillRgn(nint dc, nint region, nint brush);
+    [DllImport("user32.dll")] private static extern bool DrawFocusRect(nint dc, ref Rect rect);
+    [DllImport("user32.dll", EntryPoint = "DrawTextW", CharSet = CharSet.Unicode)] private static extern int DrawText(nint dc, string text, int length, ref Rect rect, uint flags);
     [DllImport("gdi32.dll", EntryPoint = "CreateFontW", CharSet = CharSet.Unicode)] private static extern nint CreateFont(int height, int width, int escape, int orientation, int weight, uint italic, uint underline, uint strike, uint charset, uint outPrecision, uint clipPrecision, uint quality, uint pitch, string face);
     [DllImport("dwmapi.dll")] private static extern int DwmSetWindowAttribute(nint window, uint attribute, in int value, int size);
 }
